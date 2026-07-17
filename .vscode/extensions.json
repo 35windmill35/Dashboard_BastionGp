@@ -1,0 +1,5 @@
+//Для удобства форматирования при сохранении файлов
+//Использует Prettier - Code formatter
+{
+  "recommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint"]
+}
