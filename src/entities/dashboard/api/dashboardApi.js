@@ -25,3 +25,36 @@ export async function getDashboardData(periodYm, dbIndex) {
 
   return data?.DashboardGrowingPoints || null
 }
+
+// GET /api-v2/Dashboard/AccountListDashboardGrowingPoints/{PeriodYM}
+// Drill-through — список заказ-нарядов, формирующих метрику (модальное
+// окно детализации, см. ТЗ §4 "Drill-through"). Фильтрация — стандартным
+// FilterString/FilterParam (см. общую документацию API, раздел про
+// фильтры), сортировка — SortBy/SortOrder.
+//
+// Пример вызова для конкретного мастера:
+// getAccountList(202606, 0, { filterString: 'MASTER_ID=?', filterParam: [123] })
+//
+// ⚠ Структура ответа этого метода ещё не проверялась на реальном стенде
+// (см. открытые вопросы в заметках по API) — путь к данным ниже (data.*)
+// предположительный по аналогии с другими Dashboard/* методами и может
+// потребовать правки после первого реального запроса.
+export async function getAccountList(periodYm, dbIndex, options = {}) {
+  const { filterString, filterParam, sortBy, sortOrder, fields } = options
+
+  const { data } = await getAuthorized(
+    `/api-v2/Dashboard/AccountListDashboardGrowingPoints/${periodYm}`,
+    {
+      params: {
+        DBIndex: dbIndex,
+        FilterString: filterString,
+        ...(filterParam ? Object.fromEntries(filterParam.map((v, i) => [`FilterParam[${i}]`, v])) : {}),
+        SortBy: sortBy,
+        SortOrder: sortOrder,
+        Fields: fields,
+      },
+    }
+  )
+
+  return data
+}
