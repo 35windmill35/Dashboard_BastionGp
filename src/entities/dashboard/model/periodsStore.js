@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction, reaction } from 'mobx'
+import { makeAutoObservable, observable, runInAction, reaction } from 'mobx'
 import { getPeriods } from '../api/dashboardApi'
 import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import { authStore } from '@/entities/user/model/authStore'
@@ -10,7 +10,9 @@ class PeriodsStore {
   error = null
 
   constructor() {
-    makeAutoObservable(this)
+    // periods — observable.ref, см. подробное объяснение в dashboardStore.js
+    // (нужно, чтобы данные оставались обычными JS-объектами для Recharts/React).
+    makeAutoObservable(this, { periods: observable.ref })
 
     // Как только пользователь залогинен (и при смене автоцентра) —
     // подтягиваем список доступных периодов заново.

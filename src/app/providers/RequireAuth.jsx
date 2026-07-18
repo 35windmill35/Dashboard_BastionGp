@@ -1,12 +1,4 @@
-import { observer } from 'mobx-react-lite'
-import { Navigate } from 'react-router-dom'
-import { authStore } from '@/entities/user/model/authStore'
-
-// Оборачивает защищённые страницы: нет сессии/баз — редирект на /login.
-export const RequireAuth = observer(function RequireAuth({ children }) {
-  if (!authStore.isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
-
-  return children
-})
+// УСТАРЕЛО: заменено на @/app/layouts/ProtectedLayout (та же защита +
+// глобальная шапка с фильтрами). Этот файл оставлен, чтобы не менять
+// историю git руками — не использовать в новом коде.
+export { ProtectedLayout as RequireAuth } from '@/app/layouts/ProtectedLayout'

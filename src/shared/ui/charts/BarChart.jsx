@@ -1,0 +1,80 @@
+import {
+  BarChart as RBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RTooltip,
+  ResponsiveContainer,
+} from 'recharts'
+import { CHART_COLORS } from '@/shared/lib/chartColors'
+
+// Обёртка над Recharts BarChart — единый стиль осей/сетки/тултипа на всех
+// экранах. layout="horizontal" (по умолчанию, столбцы вертикальные, как
+// «Оборот за 12 мес») или layout="vertical" (столбцы горизонтальные, как
+// «Т-фактор по мастерам»).
+//
+// dataKey — поле для высоты/длины столбца (Y в горизонтальном layout —
+// категория, задаётся через categoryKey).
+// onBarClick(item) — клик по столбцу (drill-through/смена периода).
+// tooltipFormatter(value, item) — необязательно, для кастомного текста тултипа.
+//
+// Пример (вертикальные столбцы, «Обзор»):
+// <BarChart data={dashboardStore.monthly} categoryKey="MONTH_LABEL" dataKey="TURNOVER"
+//   onBarClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)} />
+//
+// Пример (горизонтальные столбцы, «Эффективность»):
+// <BarChart layout="vertical" data={masters} categoryKey="MASTER_NAME" dataKey="T_FACTOR"
+//   onBarClick={(item) => openDrillThrough(item)} />
+export function BarChart({
+  data,
+  dataKey,
+  categoryKey,
+  layout = 'horizontal',
+  height = 280,
+  color = CHART_COLORS.accent,
+  valueFormatter,
+  onBarClick,
+}) {
+  const isVertical = layout === 'vertical'
+
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <RBarChart
+        data={data}
+        layout={layout}
+        margin={{ top: 8, right: 16, left: 0, bottom: 8 }}
+      >
+        <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
+        {isVertical ? (
+          <>
+            <XAxis type="number" stroke={CHART_COLORS.textSecondary} fontSize={12} />
+            <YAxis
+              type="category"
+              dataKey={categoryKey}
+              stroke={CHART_COLORS.textSecondary}
+              fontSize={12}
+              width={140}
+            />
+          </>
+        ) : (
+          <>
+            <XAxis dataKey={categoryKey} stroke={CHART_COLORS.textSecondary} fontSize={12} />
+            <YAxis stroke={CHART_COLORS.textSecondary} fontSize={12} />
+          </>
+        )}
+        <RTooltip
+          formatter={valueFormatter}
+          contentStyle={{ background: '#1c1c1e', border: `1px solid ${CHART_COLORS.border}` }}
+        />
+        <Bar
+          dataKey={dataKey}
+          fill={color}
+          radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
+          onClick={onBarClick}
+          cursor={onBarClick ? 'pointer' : undefined}
+        />
+      </RBarChart>
+    </ResponsiveContainer>
+  )
+}

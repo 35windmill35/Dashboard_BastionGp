@@ -94,6 +94,22 @@ loading/empty/error) либо уже готовы в `src/shared/ui/`, либо 
 описан лидом, чтобы замена на общий компонент была быстрой заменой
 импорта, а не переписыванием разметки.
 
+## Важный подводный камень MobX + Recharts
+
+Если добавляете в стор новое observable-поле, которое хранит массив/объект
+и будет передаваться в графики (Recharts) — объявляйте его как
+`observable.ref`, а не глубокий observable:
+
+```js
+makeAutoObservable(this, { myArrayField: observable.ref })
+```
+
+Иначе будет ошибка `[MobX] Dynamic observable objects cannot be frozen` —
+Recharts/React пытаются сделать `Object.freeze` над данными, а глубокие
+MobX-прокси этого не позволяют. Уже поправлено в `dashboardStore`,
+`periodsStore`, `authStore` — если создаёте новый стор с похожими
+данными, помните про это сразу.
+
 ## Что делать, если чего-то не хватает
 
 Если для вашего экрана не хватает геттера в `dashboardStore` (например,

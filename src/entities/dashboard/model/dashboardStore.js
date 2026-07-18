@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction, reaction } from 'mobx'
+import { makeAutoObservable, observable, runInAction, reaction } from 'mobx'
 import { getDashboardData } from '../api/dashboardApi'
 import { authStore } from '@/entities/user/model/authStore'
 import { periodsStore } from './periodsStore'
@@ -9,7 +9,13 @@ class DashboardStore {
   error = null
 
   constructor() {
-    makeAutoObservable(this)
+    // `data` — observable.ref (не глубокий observable): реактивность нужна
+    // только на замену всего объекта при смене периода, а вложенные
+    // массивы/объекты (monthly, masters и т.д.) должны оставаться обычными
+    // JS-объектами. Иначе Recharts/React пытаются сделать Object.freeze
+    // над MobX-прокси и падают с ошибкой "Dynamic observable objects
+    // cannot be frozen".
+    makeAutoObservable(this, { data: observable.ref })
 
     // Автоматическая перезагрузка данных при смене периода или автоцентра
     // (глобальные фильтры из шапки, см. ТЗ §3). Страницам/виджетам не нужно

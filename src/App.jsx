@@ -5,7 +5,7 @@ import { EfficiencyPage } from '@/pages/efficiency/EfficiencyPage'
 import { MastersPage } from '@/pages/masters/MastersPage'
 import { MechanicsPage } from '@/pages/mechanics/MechanicsPage'
 import { BrandsPage } from '@/pages/brands/BrandsPage'
-import { RequireAuth } from '@/app/providers/RequireAuth'
+import { ProtectedLayout } from '@/app/layouts/ProtectedLayout'
 
 function App() {
   return (
@@ -15,41 +15,41 @@ function App() {
       <Route
         path="/"
         element={
-          <RequireAuth>
+          <ProtectedLayout>
             <OverviewPage />
-          </RequireAuth>
+          </ProtectedLayout>
         }
       />
       <Route
         path="/efficiency"
         element={
-          <RequireAuth>
+          <ProtectedLayout>
             <EfficiencyPage />
-          </RequireAuth>
+          </ProtectedLayout>
         }
       />
       <Route
         path="/masters"
         element={
-          <RequireAuth>
+          <ProtectedLayout>
             <MastersPage />
-          </RequireAuth>
+          </ProtectedLayout>
         }
       />
       <Route
         path="/mechanics"
         element={
-          <RequireAuth>
+          <ProtectedLayout>
             <MechanicsPage />
-          </RequireAuth>
+          </ProtectedLayout>
         }
       />
       <Route
         path="/brands"
         element={
-          <RequireAuth>
+          <ProtectedLayout>
             <BrandsPage />
-          </RequireAuth>
+          </ProtectedLayout>
         }
       />
     </Routes>

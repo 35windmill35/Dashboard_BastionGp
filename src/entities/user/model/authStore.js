@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx'
+import { makeAutoObservable, observable, runInAction } from 'mobx'
 import { loginAppUser } from '../api/authApi'
 import { getSessionId, setSession, clearSession } from '@/shared/api/session'
 import { getDbGuidFromUrl } from '@/shared/config/dbGuid'
@@ -12,7 +12,9 @@ class AuthStore {
   error = null
 
   constructor() {
-    makeAutoObservable(this)
+    // firms — observable.ref, см. объяснение в dashboardStore.js (та же
+    // причина: элементы должны оставаться обычными JS-объектами).
+    makeAutoObservable(this, { firms: observable.ref })
     this.restoreFirms()
   }
 
