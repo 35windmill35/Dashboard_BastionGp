@@ -1,0 +1,110 @@
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4) var(--space-3);
+  height: 100svh;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-5);
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-accent);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.brandName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.brandPeriod {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.navLink svg {
+  flex-shrink: 0;
+}
+
+.navLink:hover {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+
+.navLinkActive,
+.navLinkActive:hover {
+  color: #1a1206;
+  background: var(--color-accent);
+  font-weight: 600;
+}
+
+/* На узких экранах сайдбар превращается в верхнюю панель без подписей —
+   полноценное горизонтальное меню сюда не убрать без потери читаемости,
+   поэтому на мобильных это просто узкая иконочная полоса сверху. */
+@media (max-width: 720px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    overflow-x: auto;
+  }
+
+  .brand {
+    padding: 0 var(--space-3) 0 0;
+  }
+
+  .brandPeriod {
+    display: none;
+  }
+
+  .nav {
+    flex-direction: row;
+  }
+
+  .navLink span {
+    display: none;
+  }
+}

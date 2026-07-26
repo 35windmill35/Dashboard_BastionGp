@@ -34,7 +34,7 @@ export function LineChart({
         <YAxis stroke={CHART_COLORS.textSecondary} fontSize={12} />
         <RTooltip
           formatter={valueFormatter}
-          contentStyle={{ background: '#1c1c1e', border: `1px solid ${CHART_COLORS.border}` }}
+          contentStyle={{ background: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}` }}
         />
         <Line
           type="monotone"

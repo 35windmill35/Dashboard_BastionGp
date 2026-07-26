@@ -7,9 +7,22 @@ import { KpiCard } from '@/shared/ui/KpiCard/KpiCard'
 import { BarChart } from '@/shared/ui/charts/BarChart'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { AsyncBoundary } from '@/shared/ui/AsyncBoundary/AsyncBoundary'
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
+import { InsightBanner } from '@/shared/ui/InsightBanner/InsightBanner'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
-import { formatPercent, formatMinutes, formatHours, formatServiceTime, cleanName } from '@/shared/lib/formatters'
+import {
+  formatPercent,
+  formatMinutes,
+  formatHours,
+  formatServiceTime,
+  calcDelta,
+  formatDelta,
+  isDeltaPositive,
+  cleanName,
+} from '@/shared/lib/formatters'
+import { CHART_COLORS } from '@/shared/lib/chartColors'
+import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import styles from './Efficiency.module.css'
 
 // Экран «Эффективность» (ТЗ §4.2). Про клик на графиках «Т-фактор» и
@@ -26,6 +39,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
   const marksRef = useRef(null)
 
   const kpi = dashboardStore.kpi
+  const kpiPrev = dashboardStore.kpiPrev
   const masters = dashboardStore.mastersFiltered
   const marks = dashboardStore.marks
 
@@ -33,8 +47,24 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
   const wastedData = masters.filter((m) => m.WASTED_TIME_MIN !== null && m.WASTED_TIME_MIN !== undefined)
   const sortedMarks = [...marks].sort((a, b) => (b.TURNOVER || 0) - (a.TURNOVER || 0))
 
-  // Учитываем sticky-шапку (id стабильный, в отличие от хэшированного
-  // CSS-модуль класса — см. widgets/app-header/AppHeader.jsx).
+  // Средние потери по мастерам — точка отсчёта "хорошо/плохо" для
+  // раскраски столбцов (см. референс в ТЗ: выше среднего — красный, ниже —
+  // зелёный). Не строгое бизнес-правило, а наглядная подсветка на глаз.
+  const avgWastedTime = wastedData.length
+    ? wastedData.reduce((sum, m) => sum + m.WASTED_TIME_MIN, 0) / wastedData.length
+    : 0
+
+  // Сводки-подсказки внизу экрана (см. референс в ТЗ): мастер с
+  // наибольшими и с наименьшими потерями на ЗН. Наглядная подсказка "на
+  // что посмотреть в первую очередь", а не строгая аналитика — считаем
+  // прямо на фронте по уже загруженным данным месяца, без похода в API.
+  const wastedBySizeDesc = [...wastedData].sort((a, b) => b.WASTED_TIME_MIN - a.WASTED_TIME_MIN)
+  const worstMaster = wastedBySizeDesc[0]
+  const bestMaster = wastedBySizeDesc[wastedBySizeDesc.length - 1]
+  const getSurname = (name) => cleanName(name).split(' ')[0] || '—'
+
+  // Учитываем узкую панель фильтров над контентом (id стабильный, в
+  // отличие от хэшированного CSS-модуль класса — см. widgets/app-sidebar/AppTopBar.jsx).
   const scrollToElement = (ref) => {
     if (!ref.current) return
     const header = document.getElementById('app-header')
@@ -55,9 +85,14 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
     })
   }
 
+  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Эффективность</h1>
+      <PageHeader
+        title="Т-фактор, потери, аккуратность"
+        subtitle={`${periodLabel} — операционная эффективность`}
+      />
 
       <AsyncBoundary
         isLoading={dashboardStore.isLoadingAny}
@@ -71,25 +106,35 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
               <KpiCard
                 title="Т-фактор"
                 value={formatPercent(kpi.T_FACTOR)}
+                delta={formatDelta(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
+                deltaPositive={isDeltaPositive(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
                 tooltip="Загрузка мощностей"
                 onClick={() => scrollToElement(tFactorRef)}
               />
               <KpiCard
                 title="Потери на ЗН"
                 value={formatMinutes(kpi.WASTED_TIME_MIN)}
-                tooltip="Простой на ЗН, меньше — лучше"
+                delta={formatDelta(calcDelta(kpi.WASTED_TIME_MIN, kpiPrev?.WASTED_TIME_MIN))}
+                deltaPositive={isDeltaPositive(calcDelta(kpi.WASTED_TIME_MIN, kpiPrev?.WASTED_TIME_MIN), {
+                  higherIsBetter: false,
+                })}
+                tooltip="Снижение = улучшение"
                 onClick={() => scrollToElement(wastedRef)}
               />
               <KpiCard
                 title="Аккуратность"
                 value={formatPercent(kpi.ACCURACY)}
+                delta={formatDelta(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
+                deltaPositive={isDeltaPositive(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
                 tooltip="Качество исполнения"
                 onClick={() => scrollToElement(marksRef)}
               />
               <KpiCard
                 title="Выработка"
                 value={formatHours(kpi.LABOR_TIME)}
-                tooltip="Суммарные нормо-часы"
+                delta={formatDelta(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
+                deltaPositive={isDeltaPositive(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
+                tooltip="Суммарная"
                 onClick={() => navigate('/mechanics')}
               />
             </div>
@@ -102,6 +147,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   data={tFactorData}
                   categoryKey="MASTER_NAME"
                   dataKey="T_FACTOR"
+                  colorBySign
                   valueFormatter={(value) => formatPercent(value)}
                   onBarClick={(item) => goToMasterDrillDown(item.MASTER_ID)}
                 />
@@ -114,6 +160,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   data={wastedData}
                   categoryKey="MASTER_NAME"
                   dataKey="WASTED_TIME_MIN"
+                  getColor={(m) => (m.WASTED_TIME_MIN > avgWastedTime ? CHART_COLORS.negative : CHART_COLORS.positive)}
                   valueFormatter={(value) => formatMinutes(value)}
                   onBarClick={(item) => goToMasterDrillDown(item.MASTER_ID)}
                 />
@@ -161,6 +208,21 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                 onRowClick={openMarkDrillThrough}
               />
             </div>
+
+            {worstMaster && bestMaster && worstMaster !== bestMaster && (
+              <div className={styles.insightsRow}>
+                <InsightBanner
+                  variant="warning"
+                  title={`Высокие потери у ${getSurname(worstMaster.MASTER_NAME)}`}
+                  description={`${formatMinutes(worstMaster.WASTED_TIME_MIN)} потерь на ЗН — существенно выше среднего (${formatMinutes(avgWastedTime)}). Требует разбора.`}
+                />
+                <InsightBanner
+                  variant="success"
+                  title={`${getSurname(bestMaster.MASTER_NAME)} — минимальные потери`}
+                  description={`Всего ${formatMinutes(bestMaster.WASTED_TIME_MIN)} потерь, аккуратность ${formatPercent(bestMaster.ACCURACY)}. Лучший показатель по потерям среди мастеров.`}
+                />
+              </div>
+            )}
           </>
         )}
       </AsyncBoundary>

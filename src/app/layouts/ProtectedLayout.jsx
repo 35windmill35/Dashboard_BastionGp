@@ -3,7 +3,8 @@ import { observer } from 'mobx-react-lite'
 import { Navigate } from 'react-router-dom'
 import { authStore } from '@/entities/user/model/authStore'
 import { periodsStore } from '@/entities/dashboard/model/periodsStore'
-import { AppHeader } from '@/widgets/app-header/AppHeader'
+import { AppSidebar } from '@/widgets/app-sidebar/AppSidebar'
+import { AppTopBar } from '@/widgets/app-sidebar/AppTopBar'
 import styles from './ProtectedLayout.module.css'
 
 // Оборачивает защищённые страницы: нет сессии — редирект на /login, иначе
@@ -29,8 +30,13 @@ export const ProtectedLayout = observer(function ProtectedLayout({ children }) {
 
   return (
     <div className={styles.wrapper}>
-      <AppHeader />
-      <main className={styles.main}>{children}</main>
+      <AppSidebar />
+      <div className={styles.contentColumn}>
+        <div className={styles.contentInner}>
+          <AppTopBar />
+          <main className={styles.main}>{children}</main>
+        </div>
+      </div>
     </div>
   )
 })

@@ -7,8 +7,11 @@ import { KpiCard } from '@/shared/ui/KpiCard/KpiCard'
 import { BarChart } from '@/shared/ui/charts/BarChart'
 import { LineChart } from '@/shared/ui/charts/LineChart'
 import { AsyncBoundary } from '@/shared/ui/AsyncBoundary/AsyncBoundary'
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
+import { CHART_COLORS } from '@/shared/lib/chartColors'
+import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import {
   formatCurrency,
   formatPercent,
@@ -33,13 +36,19 @@ export const OverviewPage = observer(function OverviewPage() {
   const kpiPrev = dashboardStore.kpiPrev
   const monthly = dashboardStore.monthly
 
+  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+  const generatedOn = new Date().toLocaleDateString('ru-RU')
+
   const openAllAccounts = (title) => {
     drillThrough.open({ title })
   }
 
   return (
     <div className={styles.page}>
-      <h1>Обзор — {authStore.currentFirm?.FIRM_SHORT_NAME}</h1>
+      <PageHeader
+        title={`Обзор — ${periodLabel}`}
+        subtitle={`${authStore.currentFirm?.FIRM_SHORT_NAME || ''} · Точки роста. Сформирован ${generatedOn}`}
+      />
 
       <AsyncBoundary
         isLoading={dashboardStore.isLoadingAny}
@@ -135,6 +144,7 @@ export const OverviewPage = observer(function OverviewPage() {
                   data={monthly}
                   categoryKey="MONTH_LABEL"
                   dataKey="ACCOUNT_COUNT"
+                  color={CHART_COLORS.blue}
                   valueFormatter={(value) => formatNumber(value)}
                   onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
                 />
@@ -145,6 +155,7 @@ export const OverviewPage = observer(function OverviewPage() {
                   data={monthly}
                   categoryKey="MONTH_LABEL"
                   dataKey="AVG_CASH"
+                  color={CHART_COLORS.positive}
                   valueFormatter={(value) => formatCurrency(value)}
                   onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
                 />
@@ -155,6 +166,7 @@ export const OverviewPage = observer(function OverviewPage() {
                   data={monthly}
                   categoryKey="MONTH_LABEL"
                   dataKey="ARTICLE_WORK_RATIO"
+                  color={CHART_COLORS.purple}
                   valueFormatter={(value) => formatPercent(value)}
                   onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
                 />

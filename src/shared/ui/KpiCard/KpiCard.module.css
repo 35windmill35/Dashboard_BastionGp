@@ -1,7 +1,7 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   padding: var(--space-4);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -18,19 +18,30 @@
 }
 
 .title {
-  font-size: 13px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-text-secondary);
 }
 
 .value {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   color: var(--color-text);
+  font-variant-numeric: tabular-nums;
 }
 
 .delta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   color: var(--color-text-secondary);
+}
+
+.delta svg {
+  flex-shrink: 0;
 }
 
 .positive {
@@ -39,4 +50,10 @@
 
 .negative {
   color: var(--color-negative);
+}
+
+.caption {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
 }

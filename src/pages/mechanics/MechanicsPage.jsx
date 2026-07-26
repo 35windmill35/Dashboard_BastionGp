@@ -6,8 +6,11 @@ import { BarChart } from '@/shared/ui/charts/BarChart'
 import { ScatterChart } from '@/shared/ui/charts/ScatterChart'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { AsyncBoundary } from '@/shared/ui/AsyncBoundary/AsyncBoundary'
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
+import { CHART_COLORS } from '@/shared/lib/chartColors'
+import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import {
   formatNumber,
   formatCurrency,
@@ -67,9 +70,11 @@ export const MechanicsPage = observer(function MechanicsPage() {
     })
   }
 
+  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Механики</h1>
+      <PageHeader title="Механики" subtitle={`Статистика по исполнителям — ${periodLabel}`} />
 
       <AsyncBoundary
         isLoading={dashboardStore.isLoadingAny}
@@ -118,6 +123,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
               nameKey="MECHANIC_NAME"
               xLabel="Потери, мин"
               yLabel="Аккуратность, %"
+              getColor={(m) => (m.ACCURACY >= 75 ? CHART_COLORS.positive : CHART_COLORS.negative)}
               onPointClick={openMechanicDrillThrough}
             />
             <p className={styles.scatterNote}>Оптимум — левый верх: меньше потерь, выше аккуратность</p>

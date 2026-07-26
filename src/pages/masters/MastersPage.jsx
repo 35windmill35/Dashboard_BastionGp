@@ -7,6 +7,7 @@ import { Tooltip } from '@/shared/ui/Tooltip/Tooltip'
 import { BarChart } from '@/shared/ui/charts/BarChart'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { AsyncBoundary } from '@/shared/ui/AsyncBoundary/AsyncBoundary'
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
 import {
@@ -18,6 +19,7 @@ import {
   isDeltaPositive,
   cleanName,
 } from '@/shared/lib/formatters'
+import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import styles from './Masters.module.css'
 
 // Экран «Мастера» (ТЗ §4.3). Карточка мастера = drill-down: локальное
@@ -46,9 +48,11 @@ export const MastersPage = observer(function MastersPage() {
     })
   }
 
+  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Мастера</h1>
+      <PageHeader title="Мастера" subtitle={`Статистика по мастерам — ${periodLabel}`} />
 
       <AsyncBoundary
         isLoading={dashboardStore.isLoadingAny}

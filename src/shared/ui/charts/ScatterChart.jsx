@@ -1,6 +1,7 @@
 import {
   ScatterChart as RScatterChart,
   Scatter,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,6 +15,9 @@ import { CHART_COLORS } from '@/shared/lib/chartColors'
 // TASK-DEV-B.md) — компонент их не фильтрует сам.
 //
 // onPointClick(item) — клик по точке (drill-through)
+// getColor(item) — необязательно: цвет конкретной точки (например, зелёная
+// точка для хорошего сочетания метрик, красная — для плохого, см. «Потери
+// vs Аккуратность» в референсе из ТЗ). Если не задан — все точки цвета color.
 //
 // Пример:
 // <ScatterChart
@@ -21,6 +25,7 @@ import { CHART_COLORS } from '@/shared/lib/chartColors'
 //   xKey="WASTED_TIME_MIN" xLabel="Потери, мин"
 //   yKey="ACCURACY" yLabel="Аккуратность, %"
 //   nameKey="MECHANIC_NAME"
+//   getColor={(m) => (m.ACCURACY >= 75 ? CHART_COLORS.positive : CHART_COLORS.negative)}
 //   onPointClick={(item) => openDrillThrough(item)}
 // />
 export function ScatterChart({
@@ -32,6 +37,7 @@ export function ScatterChart({
   yLabel,
   height = 320,
   color = CHART_COLORS.accent,
+  getColor,
   onPointClick,
 }) {
   return (
@@ -56,7 +62,7 @@ export function ScatterChart({
         />
         <RTooltip
           cursor={{ strokeDasharray: '3 3' }}
-          contentStyle={{ background: '#1c1c1e', border: `1px solid ${CHART_COLORS.border}` }}
+          contentStyle={{ background: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}` }}
           formatter={(value, name, item) => [value, name]}
           labelFormatter={() => ''}
           content={({ active, payload }) => {
@@ -65,7 +71,7 @@ export function ScatterChart({
             return (
               <div
                 style={{
-                  background: '#1c1c1e',
+                  background: CHART_COLORS.surface,
                   border: `1px solid ${CHART_COLORS.border}`,
                   padding: 8,
                   borderRadius: 6,
@@ -79,12 +85,9 @@ export function ScatterChart({
             )
           }}
         />
-        <Scatter
-          data={data}
-          fill={color}
-          onClick={onPointClick}
-          cursor={onPointClick ? 'pointer' : undefined}
-        />
+        <Scatter data={data} fill={color} onClick={onPointClick} cursor={onPointClick ? 'pointer' : undefined}>
+          {getColor && data.map((item, i) => <Cell key={i} fill={getColor(item)} />)}
+        </Scatter>
       </RScatterChart>
     </ResponsiveContainer>
   )

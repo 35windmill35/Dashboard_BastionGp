@@ -31,7 +31,7 @@ export function PieChart({ data, height = 320, onSliceClick, valueFormatter }) {
         </Pie>
         <RTooltip
           formatter={valueFormatter}
-          contentStyle={{ background: '#1c1c1e', border: `1px solid ${CHART_COLORS.border}` }}
+          contentStyle={{ background: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}` }}
         />
         <Legend wrapperStyle={{ fontSize: 12, color: CHART_COLORS.textSecondary }} />
       </RPieChart>

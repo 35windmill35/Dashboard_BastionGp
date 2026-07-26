@@ -32,6 +32,16 @@ import { CHART_COLORS } from '@/shared/lib/chartColors'
 // highlightKey="MASTER_ID" highlightValue={selectedMasterId}), столбец с
 // совпадающим значением подсвечивается акцентным цветом, остальные —
 // приглушённым (см. ТЗ «Мастера»: клик по карточке подсвечивает на графиках).
+//
+// colorBySign — необязательно: красит столбец в акцентный (положительное
+// значение) или в негативный (отрицательное) цвет вместо одного сплошного
+// — см. «Т-фактор по мастерам» в референсе (ТЗ), где отрицательный
+// Т-фактор показан красным. Несовместимо одновременно с highlightKey.
+//
+// getColor(item) — необязательно: цвет конкретного столбца по любой другой
+// логике (например, "потери выше среднего — красный, ниже — зелёный", см.
+// «Потери на ЗН по мастерам» в референсе). Приоритет ниже, чем у
+// highlightKey, но выше, чем у colorBySign.
 export function BarChart({
   data,
   dataKey,
@@ -43,6 +53,8 @@ export function BarChart({
   onBarClick,
   highlightKey,
   highlightValue,
+  colorBySign = false,
+  getColor,
 }) {
   const isVertical = layout === 'vertical'
   const hasHighlight = highlightKey !== undefined && highlightValue !== undefined && highlightValue !== null
@@ -74,7 +86,7 @@ export function BarChart({
         )}
         <RTooltip
           formatter={valueFormatter}
-          contentStyle={{ background: '#1c1c1e', border: `1px solid ${CHART_COLORS.border}` }}
+          contentStyle={{ background: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}` }}
         />
         <Bar
           dataKey={dataKey}
@@ -89,6 +101,15 @@ export function BarChart({
                 key={i}
                 fill={item[highlightKey] === highlightValue ? CHART_COLORS.accent : CHART_COLORS.border}
               />
+            ))}
+          {!hasHighlight &&
+            getColor &&
+            data.map((item, i) => <Cell key={i} fill={getColor(item)} />)}
+          {!hasHighlight &&
+            !getColor &&
+            colorBySign &&
+            data.map((item, i) => (
+              <Cell key={i} fill={(item[dataKey] || 0) < 0 ? CHART_COLORS.negative : CHART_COLORS.accent} />
             ))}
         </Bar>
       </RBarChart>

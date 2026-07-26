@@ -1,19 +1,31 @@
 .wrapper {
   min-height: 100svh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 }
 
-.main {
+.contentColumn {
   flex: 1;
-  padding: var(--space-5);
+  min-width: 0;
+}
+
+.contentInner {
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.main {
+  padding-bottom: var(--space-5);
 }
 
 @media (max-width: 720px) {
-  .main {
-    padding: var(--space-3);
+  .wrapper {
+    flex-direction: column;
+  }
+
+  .contentInner {
+    padding: 0 var(--space-3);
   }
 }

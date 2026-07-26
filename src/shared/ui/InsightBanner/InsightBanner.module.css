@@ -1,0 +1,46 @@
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  flex: 1;
+  min-width: 260px;
+}
+
+.banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.description {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.warning {
+  background: color-mix(in srgb, var(--color-negative) 12%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-negative) 35%, var(--color-border));
+}
+
+.warning svg,
+.warning .title {
+  color: var(--color-negative);
+}
+
+.success {
+  background: color-mix(in srgb, var(--color-positive) 12%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-positive) 35%, var(--color-border));
+}
+
+.success svg,
+.success .title {
+  color: var(--color-positive);
+}

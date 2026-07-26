@@ -7,9 +7,12 @@ import { LineChart } from '@/shared/ui/charts/LineChart'
 import { PieChart, groupTopNWithOthers } from '@/shared/ui/charts/PieChart'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { AsyncBoundary } from '@/shared/ui/AsyncBoundary/AsyncBoundary'
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
 import { formatCurrency, formatPercent, formatNumber, cleanName } from '@/shared/lib/formatters'
+import { CHART_COLORS } from '@/shared/lib/chartColors'
+import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import styles from './Brands.module.css'
 
 const TABS = [
@@ -69,9 +72,11 @@ export const BrandsPage = observer(function BrandsPage() {
     setActiveTab('models')
   }
 
+  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Марки / Модели / Годы</h1>
+      <PageHeader title="Марки, Модели, Годы" subtitle={`Анализ автопарка — ${periodLabel}`} />
 
       <div className={styles.tabs}>
         {TABS.map((tab) => (
@@ -212,6 +217,7 @@ export const BrandsPage = observer(function BrandsPage() {
                 data={years}
                 categoryKey="MANUFACTURE_YEAR"
                 dataKey="AVG_CASH"
+                color={CHART_COLORS.blue}
                 valueFormatter={(value) => formatCurrency(value)}
               />
             </div>
