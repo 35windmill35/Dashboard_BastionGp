@@ -83,3 +83,18 @@
     padding: 0;
   }
 }
+
+.deltaPositive {
+  color: var(--color-positive);
+  font-size: 12px;
+}
+
+.deltaNegative {
+  color: var(--color-negative);
+  font-size: 12px;
+}
+
+.deltaNeutral {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}

@@ -14,17 +14,23 @@ import {
   formatPercent,
   formatHours,
   formatServiceTime,
+  calcDelta,
+  formatDelta,
+  isDeltaPositive,
   cleanName,
 } from '@/shared/lib/formatters'
 import styles from './Mechanics.module.css'
 
-// Экран «Механики» (ТЗ §4.4). В ответе API нет mechanicsPrev — колонка Δ
-// Т-фактора сознательно не добавлена (см. API-DATA.md, «Открытые
-// вопросы»): источник для дельты пока не согласован с бэкендом.
+// Экран «Механики» (ТЗ §4.4). В ответе API нет своего mechanicsPrev (в
+// отличие от mastersPrev) — данные за предыдущий период для Δ Т-фактора
+// подгружаются отдельным запросом на фронте (см. dashboardStore.js,
+// mechanicsPrev/loadPrevPeriod), тем же методом getDashboardData.
 export const MechanicsPage = observer(function MechanicsPage() {
   const drillThrough = useDrillThrough()
 
   const mechanics = dashboardStore.mechanicsFiltered
+  const mechanicsPrev = dashboardStore.mechanicsPrev
+  const prevById = new Map(mechanicsPrev.map((m) => [m.MECHANIC_ID, m]))
 
   const mechanicCount = mechanics.length
   const totalTurnover = mechanics.reduce((sum, m) => sum + (m.TURNOVER || 0), 0)
@@ -145,9 +151,21 @@ export const MechanicsPage = observer(function MechanicsPage() {
               { key: 'LABOR_TIME', header: 'Выработка', tooltip: 'Суммарные нормо-часы', render: (r) => formatHours(r.LABOR_TIME) },
               {
                 key: 'T_FACTOR',
-                header: 'Т-фактор',
-                tooltip: 'Загрузка мощностей (Δ к пред. месяцу пока недоступна — нет данных API)',
-                render: (r) => formatPercent(r.T_FACTOR),
+                header: 'Т-фактор (Δ)',
+                tooltip: 'Загрузка мощностей. Δ — к предыдущему месяцу',
+                render: (r) => {
+                  const prev = prevById.get(r.MECHANIC_ID)
+                  const delta = prev ? calcDelta(r.T_FACTOR, prev.T_FACTOR) : null
+                  const positive = isDeltaPositive(delta)
+                  return (
+                    <>
+                      {formatPercent(r.T_FACTOR)}{' '}
+                      <span className={positive === true ? styles.deltaPositive : positive === false ? styles.deltaNegative : styles.deltaNeutral}>
+                        {formatDelta(delta)}
+                      </span>
+                    </>
+                  )
+                },
               },
               {
                 key: 'WASTED_TIME_MIN',

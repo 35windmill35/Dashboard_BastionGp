@@ -65,6 +65,19 @@ class PeriodsStore {
   setSelectedPeriod(periodYm) {
     this.selectedPeriodYm = periodYm
   }
+
+  // Ближайший предыдущий доступный период (для клиентского расчёта Δ там,
+  // где бэкенд не отдаёт свой *Prev — см. dashboardStore.mechanicsPrev).
+  // Массив идёт от нового периода к старому, поэтому "предыдущий" — это
+  // следующий элемент после текущего. Через индекс в списке периодов, а не
+  // через "PERIOD_YM - 1", чтобы корректно перескакивать через месяцы без
+  // данных.
+  get previousPeriodYm() {
+    if (!this.selectedPeriodYm) return null
+    const index = this.periods.findIndex((p) => p.PERIOD_YM === this.selectedPeriodYm)
+    if (index === -1) return null
+    return this.periods[index + 1]?.PERIOD_YM ?? null
+  }
 }
 
 export const periodsStore = new PeriodsStore()

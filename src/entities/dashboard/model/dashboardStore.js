@@ -8,6 +8,12 @@ class DashboardStore {
   isLoading = false
   error = null
 
+  // Данные за предыдущий период — только для расчёта Δ Т-фактора механиков
+  // на фронте (см. mechanicsPrev ниже). В отличие от data, это "тихая"
+  // подгрузка: свой независимый isLoading не нужен, отсутствие/ошибка не
+  // должны блокировать основной экран — Δ просто не покажется.
+  prevPeriodData = null
+
   constructor() {
     // `data` — observable.ref (не глубокий observable): реактивность нужна
     // только на замену всего объекта при смене периода, а вложенные
@@ -15,7 +21,7 @@ class DashboardStore {
     // JS-объектами. Иначе Recharts/React пытаются сделать Object.freeze
     // над MobX-прокси и падают с ошибкой "Dynamic observable objects
     // cannot be frozen".
-    makeAutoObservable(this, { data: observable.ref })
+    makeAutoObservable(this, { data: observable.ref, prevPeriodData: observable.ref })
 
     // Автоматическая перезагрузка данных при смене периода или автоцентра
     // (глобальные фильтры из шапки, см. ТЗ §3). Страницам/виджетам не нужно
@@ -72,6 +78,15 @@ class DashboardStore {
     return (this.data?.mechanics || []).filter((m) => m.MECHANIC_ID !== -1)
   }
 
+  // В API нет своего mechanicsPrev (в отличие от mastersPrev) — данные за
+  // предыдущий период запрашиваются отдельно (см. load()) тем же методом
+  // getDashboardData, из него берём mechanics для расчёта Δ Т-фактора на
+  // экране «Механики». Если предыдущего периода нет (например, самый
+  // первый месяц) — просто пустой массив, Δ у всех строк будет пустой.
+  get mechanicsPrev() {
+    return this.prevPeriodData?.mechanics || []
+  }
+
   get marks() {
     return this.data?.marks || []
   }
@@ -100,6 +115,39 @@ class DashboardStore {
       runInAction(() => {
         this.error = err.message || 'Не удалось загрузить данные дашборда'
         this.isLoading = false
+      })
+    }
+
+    // Отдельно и не блокируя основной экран — подгружаем предыдущий период
+    // только ради mechanics (Δ Т-фактора). Ошибка/отсутствие предыдущего
+    // периода намеренно не отражаются в isLoading/error: это необязательное
+    // улучшение таблицы, а не критичные для экрана данные.
+    this.loadPrevPeriod(periodYm)
+  }
+
+  async loadPrevPeriod(periodYm) {
+    const prevPeriodYm = periodsStore.previousPeriodYm
+
+    if (!prevPeriodYm) {
+      runInAction(() => {
+        this.prevPeriodData = null
+      })
+      return
+    }
+
+    try {
+      const data = await getDashboardData(prevPeriodYm, authStore.dbIndex)
+
+      runInAction(() => {
+        // Проверка на гонку: пока грузился предыдущий период, пользователь
+        // мог уже переключить период ещё раз — тогда этот ответ устарел.
+        if (periodsStore.selectedPeriodYm === periodYm) {
+          this.prevPeriodData = data
+        }
+      })
+    } catch {
+      runInAction(() => {
+        this.prevPeriodData = null
       })
     }
   }

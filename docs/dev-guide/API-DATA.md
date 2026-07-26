@@ -84,10 +84,14 @@ WASTED_TIME_MIN, ACCURACY, SUMMA_WORK, SUMMA_ARTICLE, RECOMMENDED_SUMM`
 AVG_CASH, ARTICLE_WORK_RATIO, AVG_SERVICE_TIME, LABOR_TIME, T_FACTOR,
 WASTED_TIME_MIN, ACCURACY, SUMMA_WORK, SUMMA_ARTICLE, RECOMMENDED_SUMM`
 
-⚠ **В ответе НЕТ `mechanicsPrev`** (в отличие от `mastersPrev`). Если по
-ТЗ нужна Δ для механиков — решение пока не принято (см. открытые вопросы
-ниже). Если ваш экран это требует — не выдумывайте источник сами,
-сообщите лиду.
+✅ **В ответе НЕТ `mechanicsPrev`** (в отличие от `mastersPrev`) — но это
+больше не проблема: `dashboardStore` сам отдельным запросом подгружает
+данные за предыдущий период (тем же `getDashboardData`, см.
+`loadPrevPeriod()`) и берёт из него `mechanics` для расчёта Δ. Готовый
+результат — в геттере `dashboardStore.mechanicsPrev`, используется в
+`MechanicsPage.jsx` точно так же, как `mastersPrev` в `MastersPage.jsx`.
+Если предыдущего периода нет (самый первый месяц с данными) — Δ просто не
+показывается, это нормально.
 
 **`marks[]`:**
 `PERIOD_YM, MARK_ID, MARK_NAME, ACCOUNT_COUNT, TURNOVER, TURNOVER_SHARE,
@@ -138,20 +142,25 @@ const accounts = await getAccountList(
 )
 ```
 
-⚠ **Этот метод ещё не проверен на реальном стенде** (только по описанию
-из документации API) — структура ответа может слегка отличаться от
-ожидаемой. Если при первом реальном вызове получите неожиданный формат —
-не подгоняйте разметку под догадки, сообщите лиду, поправим метод
-централизованно (в одном файле), и всем экранам сразу станет корректно.
+✅ **Структура ответа проверена на реальном стенде** (26.07.2026):
+`result.Response.DashboardGrowingPointAccounts.{data, totalRecords}`. Поля
+строки: `ACCOUNT_ID, ACCOUNT_CODE, OWNER_NAME, MARK_ID/MARK_NAME,
+MODEL_ID/MODEL_NAME, MANUFACTURE_YEAR, MASTER_ID/MASTER_NAME,
+MAIN_MECHANIC_ID/MAIN_MECHANIC_NAME, SCHEDULED_TIME, LABOR_TIME,
+WASTED_TIME_MIN, T_FACTOR, SUMMA_WORK, SUMMA_ARTICLE, SUMMA,
+ARTICLE_WORK_RATIO, DATE_END` и др.
+
+⚠ **Важно:** для заказ-нарядов поле механика называется
+`MAIN_MECHANIC_ID`, а не `MECHANIC_ID` (как в агрегате `mechanics` на
+экране «Механики») — разные имена в разных методах API. Именно это
+изначально вызывало ошибку «поле не принимается» при фильтрации ЗН по
+механику.
 
 Модалка для отображения списка (общий компонент) — см. `shared/ui` в
 `START.md`.
 
 ## 6. Открытые вопросы (пока без ответа)
 
-- Источник Δ Т-фактора для механиков (нет `mechanicsPrev`).
-- Точная структура ответа `getAccountList` (drill-through) — не
-  подтверждена практикой.
 - Права доступа (`SpecialRequests/UserRight`) — опционально по ТЗ, не
   реализовано, делаем только если останется время.
 
