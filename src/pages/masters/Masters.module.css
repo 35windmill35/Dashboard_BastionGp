@@ -1,0 +1,130 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.title {
+  font-size: 28px;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 560px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .cardsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.masterCard {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.masterCard:hover {
+  border-color: var(--color-accent);
+}
+
+.masterCardSelected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.masterName {
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.masterMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metricLabel {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.metricValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 900px) {
+  .chartsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.chartWrapper {
+  background: var(--color-surface);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.chartTitle {
+  font-size: 16px;
+  color: var(--color-text);
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+}
+
+.tableWrapper {
+  background: var(--color-surface);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.tableTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 var(--space-3);
+}
+
+.deltaPositive {
+  color: var(--color-positive);
+  font-size: 12px;
+}
+
+.deltaNegative {
+  color: var(--color-negative);
+  font-size: 12px;
+}
+
+.deltaNeutral {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}

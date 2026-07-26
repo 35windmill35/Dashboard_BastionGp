@@ -42,9 +42,9 @@ export const OverviewPage = observer(function OverviewPage() {
       <h1>Обзор — {authStore.currentFirm?.FIRM_SHORT_NAME}</h1>
 
       <AsyncBoundary
-        isLoading={dashboardStore.isLoading}
-        error={dashboardStore.error}
-        isEmpty={!dashboardStore.isLoading && !kpi}
+        isLoading={dashboardStore.isLoadingAny}
+        error={dashboardStore.errorAny}
+        isEmpty={!dashboardStore.isLoadingAny && !kpi}
         onRetry={() => periodsStore.selectedPeriodYm && dashboardStore.load(periodsStore.selectedPeriodYm)}
       >
         {kpi && (

@@ -37,9 +37,9 @@ export function useDrillThrough() {
         sortOrder,
       })
 
-      // Структура ответа этого метода не подтверждена практикой (см.
-      // API-DATA.md) — подстраховываемся под пару вероятных форм ответа.
-      const list = Array.isArray(data) ? data : data?.data || data?.Response || []
+      // Структура подтверждена на реальном стенде 26.07.2026: см.
+      // dashboardApi.js — result.Response.DashboardGrowingPointAccounts.data.
+      const list = data?.DashboardGrowingPointAccounts?.data || []
       setAccounts(list)
     } catch (err) {
       setError(err.message || 'Не удалось загрузить список заказ-нарядов')

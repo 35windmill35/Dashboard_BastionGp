@@ -6,15 +6,21 @@ import styles from './Tooltip.module.css'
 // точку графика-обёртку) — подсказка всплывает сверху по hover/focus.
 //
 // Пример: <Tooltip text="Суммарный оборот за месяц"><KpiCard .../></Tooltip>
+//
+// Обёртка — <div>, а не <span>: children часто оказывается блочным
+// элементом (например, <div> карточки KpiCard), а <div> внутри <span>
+// невалиден по спецификации HTML (span — только "phrasing content") и
+// браузер непредсказуемо перестраивает разметку. <div> принимает и
+// блочные, и строчные потомки, поэтому безопасен в обоих случаях.
 export function Tooltip({ text, children }) {
   if (!text) return children
 
   return (
-    <span className={styles.wrapper} tabIndex={0}>
+    <div className={styles.wrapper} tabIndex={0}>
       {children}
-      <span className={styles.bubble} role="tooltip">
+      <div className={styles.bubble} role="tooltip">
         {text}
-      </span>
-    </span>
+      </div>
+    </div>
   )
 }

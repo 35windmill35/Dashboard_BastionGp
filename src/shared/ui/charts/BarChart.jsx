@@ -1,6 +1,7 @@
 import {
   BarChart as RBarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -26,6 +27,11 @@ import { CHART_COLORS } from '@/shared/lib/chartColors'
 // Пример (горизонтальные столбцы, «Эффективность»):
 // <BarChart layout="vertical" data={masters} categoryKey="MASTER_NAME" dataKey="T_FACTOR"
 //   onBarClick={(item) => openDrillThrough(item)} />
+//
+// highlightKey/highlightValue — необязательно: если задать (например,
+// highlightKey="MASTER_ID" highlightValue={selectedMasterId}), столбец с
+// совпадающим значением подсвечивается акцентным цветом, остальные —
+// приглушённым (см. ТЗ «Мастера»: клик по карточке подсвечивает на графиках).
 export function BarChart({
   data,
   dataKey,
@@ -35,8 +41,11 @@ export function BarChart({
   color = CHART_COLORS.accent,
   valueFormatter,
   onBarClick,
+  highlightKey,
+  highlightValue,
 }) {
   const isVertical = layout === 'vertical'
+  const hasHighlight = highlightKey !== undefined && highlightValue !== undefined && highlightValue !== null
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -73,7 +82,15 @@ export function BarChart({
           radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
           onClick={onBarClick}
           cursor={onBarClick ? 'pointer' : undefined}
-        />
+        >
+          {hasHighlight &&
+            data.map((item, i) => (
+              <Cell
+                key={i}
+                fill={item[highlightKey] === highlightValue ? CHART_COLORS.accent : CHART_COLORS.border}
+              />
+            ))}
+        </Bar>
       </RBarChart>
     </ResponsiveContainer>
   )

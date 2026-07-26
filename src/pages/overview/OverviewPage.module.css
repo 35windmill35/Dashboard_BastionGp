@@ -4,16 +4,37 @@
   gap: var(--space-5);
 }
 
+/* Фиксированные точки перелома вместо auto-fit — так раскладка всегда
+   ровная (не оставляет "осиротевшую" карточку/график в одиночном ряду
+   на широких экранах), а не подстраивается штучно под ширину контейнера. */
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-3);
+}
+
+@media (min-width: 560px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .kpiGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .chartsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-4);
+}
+
+@media (min-width: 900px) {
+  .chartsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .chartCard {

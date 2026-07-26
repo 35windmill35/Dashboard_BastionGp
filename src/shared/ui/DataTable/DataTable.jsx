@@ -48,29 +48,31 @@ export function DataTable({ columns, data, getRowKey, onRowClick }) {
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.outer}>
+      <div className={styles.wrapper}>
       <table className={styles.table}>
         <thead>
           <tr>
             {columns.map((col) => {
-              const header = (
+              // Тултип оборачивает только содержимое заголовка, а не сам
+              // <th> — <span> не может быть прямым потомком <tr>, только
+              // <td>/<th>, иначе браузер ломает вёрстку таблицы.
+              const label = (
+                <>
+                  {col.header}
+                  {sort.key === col.key && (sort.direction === 1 ? ' ▲' : ' ▼')}
+                </>
+              )
+
+              return (
                 <th
                   key={col.key}
                   className={`${styles.th} ${col.sortable === false ? '' : styles.sortable}`}
                   onClick={() => handleHeaderClick(col)}
                   style={{ textAlign: col.align || 'left' }}
                 >
-                  {col.header}
-                  {sort.key === col.key && (sort.direction === 1 ? ' ▲' : ' ▼')}
+                  {col.tooltip ? <Tooltip text={col.tooltip}>{label}</Tooltip> : label}
                 </th>
-              )
-
-              return col.tooltip ? (
-                <Tooltip key={col.key} text={col.tooltip}>
-                  {header}
-                </Tooltip>
-              ) : (
-                header
               )
             })}
           </tr>
@@ -91,6 +93,11 @@ export function DataTable({ columns, data, getRowKey, onRowClick }) {
           ))}
         </tbody>
       </table>
+      </div>
+      {/* Подсказка «можно скроллить вправо» — на мобильных таблица шире
+          экрана и уходит в горизонтальный скролл (см. .wrapper), но без
+          подсказки не все догадаются свайпнуть. */}
+      <div className={styles.scrollHint} aria-hidden="true" />
     </div>
   )
 }

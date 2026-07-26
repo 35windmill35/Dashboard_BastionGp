@@ -47,13 +47,20 @@ class AuthStore {
 
       const { firms, sessionId, remaining } = await loginAppUser({ phone, password, dbGuid })
 
+      // Сессию сохраняем ДО обновления firms: isAuthenticated зависит от
+      // обоих (getSessionId() && firms.length), а MobX пересчитывает
+      // реакции сразу в момент присвоения observable-поля firms. Если
+      // сессия ещё не сохранена в этот момент, periodsStore/dashboardStore
+      // увидят "не залогинен" и не подгрузят данные до следующего
+      // обновления страницы — обычный порядок операций отсюда важен.
+      setSession({ sessionId, remaining })
+
       runInAction(() => {
         this.firms = firms || []
         this.dbIndex = 0
         this.isLoading = false
       })
 
-      setSession({ sessionId, remaining })
       this.persistFirms()
 
       return true

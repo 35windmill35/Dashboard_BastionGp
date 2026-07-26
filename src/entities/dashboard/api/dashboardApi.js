@@ -32,13 +32,21 @@ export async function getDashboardData(periodYm, dbIndex) {
 // FilterString/FilterParam (см. общую документацию API, раздел про
 // фильтры), сортировка — SortBy/SortOrder.
 //
+// ✅ Структура ответа проверена на реальном стенде (запрос без фильтра,
+// 26.07.2026): result.Response.DashboardGrowingPointAccounts.{data,
+// totalRecords}. Поля строки: ACCOUNT_ID, ACCOUNT_CODE, OWNER_NAME,
+// MARK_ID/MARK_NAME, MODEL_ID/MODEL_NAME, MANUFACTURE_YEAR,
+// MASTER_ID/MASTER_NAME, MAIN_MECHANIC_ID/MAIN_MECHANIC_NAME (не
+// MECHANIC_ID!), SCHEDULED_TIME, LABOR_TIME, WASTED_TIME_MIN, T_FACTOR,
+// SUMMA_WORK, SUMMA_ARTICLE, SUMMA, ARTICLE_WORK_RATIO, DATE_END и др.
+// Как и в остальных Dashboard-ответах, значения могут быть null.
+//
 // Пример вызова для конкретного мастера:
 // getAccountList(202606, 0, { filterString: 'MASTER_ID=?', filterParam: [123] })
 //
-// ⚠ Структура ответа этого метода ещё не проверялась на реальном стенде
-// (см. открытые вопросы в заметках по API) — путь к данным ниже (data.*)
-// предположительный по аналогии с другими Dashboard/* методами и может
-// потребовать правки после первого реального запроса.
+// Для механика фильтруем по MAIN_MECHANIC_ID (в API нет отдельного поля
+// MECHANIC_ID для заказ-нарядов — именно это вызывало ошибку "поле не
+// принимается" при фильтрации по MECHANIC_ID).
 export async function getAccountList(periodYm, dbIndex, options = {}) {
   const { filterString, filterParam, sortBy, sortOrder, fields } = options
 

@@ -17,7 +17,10 @@ const NAV_ITEMS = [
 // страницах — подключена в app/layouts/ProtectedLayout.
 export const AppHeader = observer(function AppHeader() {
   return (
-    <header className={styles.header}>
+    // id стабильный (в отличие от хэшированного CSS-модуль класса) —
+    // используйте #app-header, если где-то на странице нужно посчитать
+    // высоту шапки (например, скролл к якорю с учётом sticky-шапки).
+    <header id="app-header" className={styles.header}>
       <div className={styles.top}>
         <span className={styles.logo}>Точки роста</span>
 
