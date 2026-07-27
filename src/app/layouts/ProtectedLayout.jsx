@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { authStore } from '@/entities/user/model/authStore'
 import { periodsStore } from '@/entities/dashboard/model/periodsStore'
 import { AppSidebar } from '@/widgets/app-sidebar/AppSidebar'
@@ -10,6 +10,7 @@ import styles from './ProtectedLayout.module.css'
 // Оборачивает защищённые страницы: нет сессии — редирект на /login, иначе
 // рендерит глобальную шапку (фильтры + навигация, см. ТЗ §3) и контент.
 export const ProtectedLayout = observer(function ProtectedLayout({ children }) {
+  const location = useLocation()
   // Подстраховка: periodsStore обычно подгружает периоды сам через reaction
   // на authStore.isAuthenticated (см. periodsStore.js), но при самой первой
   // инициализации сторов (порядок вычисления модулей при холодном старте)
@@ -25,7 +26,12 @@ export const ProtectedLayout = observer(function ProtectedLayout({ children }) {
   }, [])
 
   if (!authStore.isAuthenticated) {
-    return <Navigate to="/login" replace />
+    // Сохраняем query-строку (DB_GUID приходит именно так, см.
+    // shared/config/dbGuid.js) при редиректе на /login — раньше редирект
+    // делался на голый "/login" без параметров, и если пользователь открывал
+    // ссылку вида "#/?DB_GUID=..." ещё не залогиненным, DB_GUID терялся
+    // ещё до того, как форма логина успевала его прочитать.
+    return <Navigate to={`/login${location.search}`} replace />
   }
 
   return (
