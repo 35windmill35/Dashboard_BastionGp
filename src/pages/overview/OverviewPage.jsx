@@ -49,8 +49,13 @@ export const OverviewPage = observer(function OverviewPage() {
   // вклад в метрику. Для метрик без такой колонки (LABOR_TIME,
   // AVG_SERVICE_TIME, WASTED_TIME_MIN, «некорректные» ЗН по аккуратности) —
   // просто список ЗН за период, это осознанное упрощение на MVP.
+  //
+  // SortOrder — число, не строка (см. dashboardApi.getPeriods, там же
+  // проверенный на стенде вызов с SortOrder: 1 — именно так сортируются
+  // периоды от нового к старому). Раньше здесь по ошибке отправлялась
+  // строка 'desc', на которой сервер отвечал 500.
   const openDrillThrough = (title, sortBy) => {
-    drillThrough.open(sortBy ? { title, sortBy, sortOrder: 'desc' } : { title })
+    drillThrough.open(sortBy ? { title, sortBy, sortOrder: 1 } : { title })
   }
 
   return (
