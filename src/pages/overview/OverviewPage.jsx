@@ -39,8 +39,18 @@ export const OverviewPage = observer(function OverviewPage() {
   const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
   const generatedOn = new Date().toLocaleDateString('ru-RU')
 
-  const openAllAccounts = (title) => {
-    drillThrough.open({ title })
+  // Drill-through для каждой KPI-карточки (кнопка-иконка в углу, отдельно
+  // от drill-down по клику на саму карточку — см. ТЗ §4.1, колонка
+  // «Drill-through»). Все 8 открывают список ЗН за выбранный период без
+  // ID-фильтра (getAccountList не поддерживает фильтр по значению метрики),
+  // но там, где соответствующее поле есть среди отображаемых колонок
+  // DrillThroughModal (SUMMA, T_FACTOR, ARTICLE_WORK_RATIO), список
+  // сортируется по нему по убыванию — так видно, какие ЗН вносят наибольший
+  // вклад в метрику. Для метрик без такой колонки (LABOR_TIME,
+  // AVG_SERVICE_TIME, WASTED_TIME_MIN, «некорректные» ЗН по аккуратности) —
+  // просто список ЗН за период, это осознанное упрощение на MVP.
+  const openDrillThrough = (title, sortBy) => {
+    drillThrough.open(sortBy ? { title, sortBy, sortOrder: 'desc' } : { title })
   }
 
   return (
@@ -66,6 +76,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.TURNOVER, kpiPrev?.TURNOVER))}
                 tooltip="Суммарный оборот за месяц"
                 onClick={() => navigate('/masters')}
+                onDrillThrough={() => openDrillThrough('Список ЗН за период', 'SUMMA')}
               />
               <KpiCard
                 title="Заказ-нарядов"
@@ -74,6 +85,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.ACCOUNT_COUNT, kpiPrev?.ACCOUNT_COUNT))}
                 tooltip="Количество закрытых ЗН за месяц"
                 onClick={() => navigate('/masters')}
+                onDrillThrough={() => openDrillThrough('Список ЗН за период')}
               />
               <KpiCard
                 title="Средний чек"
@@ -82,6 +94,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.AVG_CASH, kpiPrev?.AVG_CASH))}
                 tooltip="Оборот ÷ количество ЗН"
                 onClick={() => navigate('/brands')}
+                onDrillThrough={() => openDrillThrough('ЗН с суммами', 'SUMMA')}
               />
               <KpiCard
                 title="Т-фактор"
@@ -90,6 +103,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
                 tooltip="Загрузка мощностей. Больше 0 — переработка норматива"
                 onClick={() => navigate('/efficiency')}
+                onDrillThrough={() => openDrillThrough('ЗН с расчётом Т-фактора', 'T_FACTOR')}
               />
               <KpiCard
                 title="Аккуратность"
@@ -98,6 +112,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
                 tooltip="Доля ЗН без грубых отклонений"
                 onClick={() => navigate('/efficiency')}
+                onDrillThrough={() => openDrillThrough('ЗН за период')}
               />
               <KpiCard
                 title="Выработка"
@@ -106,6 +121,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
                 tooltip="Суммарные нормо-часы работ"
                 onClick={() => navigate('/mechanics')}
+                onDrillThrough={() => openDrillThrough('ЗН с нормо-часами')}
               />
               <KpiCard
                 title="Время ремонта"
@@ -114,6 +130,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.AVG_SERVICE_TIME, kpiPrev?.AVG_SERVICE_TIME))}
                 tooltip="Среднее время от приёмки до выдачи"
                 onClick={() => navigate('/mechanics')}
+                onDrillThrough={() => openDrillThrough('ЗН со временем ремонта')}
               />
               <KpiCard
                 title="Потери на ЗН"
@@ -124,6 +141,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 })}
                 tooltip="Простой на 1 ЗН. Меньше — лучше"
                 onClick={() => navigate('/efficiency')}
+                onDrillThrough={() => openDrillThrough('ЗН с потерями')}
               />
             </div>
 
@@ -172,10 +190,6 @@ export const OverviewPage = observer(function OverviewPage() {
                 />
               </div>
             </div>
-
-            <button className={styles.debugLink} type="button" onClick={() => openAllAccounts('Список ЗН за период')}>
-              Проверить drill-through модалку
-            </button>
           </>
         )}
       </AsyncBoundary>

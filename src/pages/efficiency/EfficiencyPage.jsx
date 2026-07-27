@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 import { dashboardStore } from '@/entities/dashboard/model/dashboardStore'
@@ -37,6 +37,14 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
   const tFactorRef = useRef(null)
   const wastedRef = useRef(null)
   const marksRef = useRef(null)
+
+  // ТЗ §4.2 требует для этих двух графиков и drill-down (клик по мастеру →
+  // «Мастера» с выделением), и отдельный drill-through (список ЗН мастера).
+  // Один клик по столбцу не может делать оба действия одновременно, поэтому
+  // над каждым графиком — переключатель режима клика; по умолчанию
+  // drill-down (более частый сценарий — посмотреть карточку мастера).
+  const [tFactorMode, setTFactorMode] = useState('drilldown')
+  const [wastedMode, setWastedMode] = useState('drilldown')
 
   const kpi = dashboardStore.kpi
   const kpiPrev = dashboardStore.kpiPrev
@@ -82,6 +90,14 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
       title: `Заказ-наряды по марке «${cleanName(mark.MARK_NAME)}»`,
       filterString: 'MARK_ID=?',
       filterParam: [mark.MARK_ID],
+    })
+  }
+
+  const openMasterDrillThrough = (master, subtitle) => {
+    drillThrough.open({
+      title: `${subtitle} мастера «${cleanName(master.MASTER_NAME)}»`,
+      filterString: 'MASTER_ID=?',
+      filterParam: [master.MASTER_ID],
     })
   }
 
@@ -141,7 +157,25 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
 
             <div className={styles.chartsRow}>
               <div className={styles.chartWrapper} ref={tFactorRef}>
-                <h3 className={styles.chartTitle}>Т-фактор по мастерам</h3>
+                <div className={styles.chartHeader}>
+                  <h3 className={styles.chartTitle}>Т-фактор по мастерам</h3>
+                  <div className={styles.modeToggle}>
+                    <button
+                      type="button"
+                      className={tFactorMode === 'drilldown' ? styles.modeBtnActive : styles.modeBtn}
+                      onClick={() => setTFactorMode('drilldown')}
+                    >
+                      Мастер
+                    </button>
+                    <button
+                      type="button"
+                      className={tFactorMode === 'drillthrough' ? styles.modeBtnActive : styles.modeBtn}
+                      onClick={() => setTFactorMode('drillthrough')}
+                    >
+                      Список ЗН
+                    </button>
+                  </div>
+                </div>
                 <BarChart
                   layout="vertical"
                   data={tFactorData}
@@ -149,12 +183,34 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   dataKey="T_FACTOR"
                   colorBySign
                   valueFormatter={(value) => formatPercent(value)}
-                  onBarClick={(item) => goToMasterDrillDown(item.MASTER_ID)}
+                  onBarClick={(item) =>
+                    tFactorMode === 'drilldown'
+                      ? goToMasterDrillDown(item.MASTER_ID)
+                      : openMasterDrillThrough(item, 'Список ЗН')
+                  }
                 />
               </div>
 
               <div className={styles.chartWrapper} ref={wastedRef}>
-                <h3 className={styles.chartTitle}>Потери на ЗН по мастерам</h3>
+                <div className={styles.chartHeader}>
+                  <h3 className={styles.chartTitle}>Потери на ЗН по мастерам</h3>
+                  <div className={styles.modeToggle}>
+                    <button
+                      type="button"
+                      className={wastedMode === 'drilldown' ? styles.modeBtnActive : styles.modeBtn}
+                      onClick={() => setWastedMode('drilldown')}
+                    >
+                      Мастер
+                    </button>
+                    <button
+                      type="button"
+                      className={wastedMode === 'drillthrough' ? styles.modeBtnActive : styles.modeBtn}
+                      onClick={() => setWastedMode('drillthrough')}
+                    >
+                      Список ЗН
+                    </button>
+                  </div>
+                </div>
                 <BarChart
                   layout="vertical"
                   data={wastedData}
@@ -162,7 +218,11 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   dataKey="WASTED_TIME_MIN"
                   getColor={(m) => (m.WASTED_TIME_MIN > avgWastedTime ? CHART_COLORS.negative : CHART_COLORS.positive)}
                   valueFormatter={(value) => formatMinutes(value)}
-                  onBarClick={(item) => goToMasterDrillDown(item.MASTER_ID)}
+                  onBarClick={(item) =>
+                    wastedMode === 'drilldown'
+                      ? goToMasterDrillDown(item.MASTER_ID)
+                      : openMasterDrillThrough(item, 'ЗН с потерями')
+                  }
                 />
               </div>
             </div>

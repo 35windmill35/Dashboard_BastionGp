@@ -1,4 +1,5 @@
 import { TrendUpIcon, TrendDownIcon } from './TrendArrow'
+import { ListIcon } from './icons'
 import styles from './KpiCard.module.css'
 
 // Карточка KPI (см. ТЗ §4.1 и аналогичные разделы на других экранах, вид —
@@ -11,6 +12,12 @@ import styles from './KpiCard.module.css'
 // (formatCurrency/formatPercent/calcDelta/formatDelta/isDeltaPositive) —
 // KpiCard сам ничего не форматирует, только отображает готовые строки.
 //
+// onClick — drill-down (переход/скролл на связанный график, см. ТЗ, колонка
+// «Drill-down»). onDrillThrough — отдельная, независимая кнопка-иконка в
+// углу карточки: открывает модалку со списком ЗН (ТЗ, колонка
+// «Drill-through»). Оба клика на карточке не мешают друг другу — клик по
+// иконке останавливает всплытие (stopPropagation), чтобы не сработал onClick.
+//
 // Пример:
 // <KpiCard
 //   title="Оборот"
@@ -19,9 +26,11 @@ import styles from './KpiCard.module.css'
 //   deltaPositive={isDeltaPositive(calcDelta(kpi.TURNOVER, kpiPrev.TURNOVER))}
 //   tooltip="Суммарный оборот за месяц"
 //   onClick={() => navigate('/masters')}
+//   onDrillThrough={() => drillThrough.open({ title: 'Список ЗН за период' })}
 // />
-export function KpiCard({ title, value, delta, deltaPositive = null, tooltip, onClick }) {
+export function KpiCard({ title, value, delta, deltaPositive = null, tooltip, onClick, onDrillThrough }) {
   const isClickable = typeof onClick === 'function'
+  const hasDrillThrough = typeof onDrillThrough === 'function'
   const hasDelta = delta !== undefined && delta !== null && delta !== '—'
   // Стрелка отражает направление самого изменения (рост/падение), а не
   // "хорошо/плохо" — эти два понятия расходятся для метрик вида "меньше
@@ -48,6 +57,20 @@ export function KpiCard({ title, value, delta, deltaPositive = null, tooltip, on
           : undefined
       }
     >
+      {hasDrillThrough && (
+        <button
+          type="button"
+          className={styles.drillThroughBtn}
+          title="Список заказ-нарядов"
+          aria-label="Список заказ-нарядов"
+          onClick={(e) => {
+            e.stopPropagation()
+            onDrillThrough(e)
+          }}
+        >
+          <ListIcon />
+        </button>
+      )}
       <div className={styles.title}>{title}</div>
       <div className={styles.value}>{value}</div>
       {hasDelta && (

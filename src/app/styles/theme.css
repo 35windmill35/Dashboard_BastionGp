@@ -77,3 +77,31 @@
   --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
 }
+
+/* Скроллбар под тему (по умолчанию браузер рисует системный светлый
+   скроллбар, который сильно выбивается на тёмном фоне — особенно заметно в
+   модалках/таблицах). scrollbar-color красит Firefox, ::-webkit-scrollbar —
+   Chrome/Edge/Safari. Оба берут цвета из тех же переменных темы, поэтому
+   автоматически меняются вместе со светлой/тёмной темой. */
+* {
+  scrollbar-color: var(--color-border) var(--color-surface);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}

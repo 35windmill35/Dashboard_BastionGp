@@ -1,4 +1,5 @@
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -7,6 +8,28 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   min-width: 160px;
+}
+
+.drillThroughBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.drillThroughBtn:hover {
+  background: var(--color-surface-2);
+  color: var(--color-accent);
 }
 
 .clickable {

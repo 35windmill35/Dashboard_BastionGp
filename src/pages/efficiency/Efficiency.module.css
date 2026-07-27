@@ -52,7 +52,39 @@
 .chartTitle {
   font-size: 16px;
   color: var(--color-text);
-  margin: 0 0 var(--space-3);
+  margin: 0;
+  font-weight: 600;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.modeToggle {
+  display: flex;
+  gap: 4px;
+}
+
+.modeBtn,
+.modeBtnActive {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.modeBtnActive {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #1a1206;
   font-weight: 600;
 }
 
