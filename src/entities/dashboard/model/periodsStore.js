@@ -2,6 +2,7 @@ import { makeAutoObservable, observable, runInAction, reaction } from 'mobx'
 import { getPeriods } from '../api/dashboardApi'
 import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import { authStore } from '@/entities/user/model/authStore'
+import { getErrorMessage } from '@/shared/api/errorMessage'
 
 class PeriodsStore {
   periods = []
@@ -47,7 +48,7 @@ class PeriodsStore {
       })
     } catch (err) {
       runInAction(() => {
-        this.error = err.message || 'Не удалось загрузить список периодов'
+        this.error = getErrorMessage(err, { fallback: 'Не удалось загрузить список периодов' })
         this.isLoading = false
       })
     }

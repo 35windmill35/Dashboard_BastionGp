@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { getAccountList } from '@/entities/dashboard/api/dashboardApi'
 import { authStore } from '@/entities/user/model/authStore'
 import { periodsStore } from '@/entities/dashboard/model/periodsStore'
+import { getErrorMessage } from '@/shared/api/errorMessage'
 
 // Хук управления drill-through модалкой (список ЗН по клику на
 // метрику/строку/точку графика — см. ТЗ, "Drill-through" во всех разделах).
@@ -42,7 +43,7 @@ export function useDrillThrough() {
       const list = data?.DashboardGrowingPointAccounts?.data || []
       setAccounts(list)
     } catch (err) {
-      setError(err.message || 'Не удалось загрузить список заказ-нарядов')
+      setError(getErrorMessage(err, { fallback: 'Не удалось загрузить список заказ-нарядов' }))
     } finally {
       setIsLoading(false)
     }

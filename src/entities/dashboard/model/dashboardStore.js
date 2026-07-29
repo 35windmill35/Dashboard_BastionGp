@@ -2,6 +2,7 @@ import { makeAutoObservable, observable, runInAction, reaction } from 'mobx'
 import { getDashboardData } from '../api/dashboardApi'
 import { authStore } from '@/entities/user/model/authStore'
 import { periodsStore } from './periodsStore'
+import { getErrorMessage } from '@/shared/api/errorMessage'
 
 class DashboardStore {
   data = null
@@ -113,7 +114,7 @@ class DashboardStore {
       })
     } catch (err) {
       runInAction(() => {
-        this.error = err.message || 'Не удалось загрузить данные дашборда'
+        this.error = getErrorMessage(err, { fallback: 'Не удалось загрузить данные дашборда' })
         this.isLoading = false
       })
     }

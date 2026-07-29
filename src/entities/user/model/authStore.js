@@ -2,6 +2,7 @@ import { makeAutoObservable, observable, runInAction } from 'mobx'
 import { loginAppUser } from '../api/authApi'
 import { getSessionId, setSession, clearSession } from '@/shared/api/session'
 import { getDbGuidFromUrl } from '@/shared/config/dbGuid'
+import { getErrorMessage } from '@/shared/api/errorMessage'
 
 const FIRMS_STORAGE_KEY = 'growing_points_firms'
 
@@ -66,7 +67,12 @@ class AuthStore {
       return true
     } catch (err) {
       runInAction(() => {
-        this.error = err.message || 'Не удалось войти. Проверьте телефон и пароль.'
+        this.error = getErrorMessage(err, {
+          fallback: 'Не удалось войти. Проверьте телефон и пароль.',
+          // 401 на логине — это неверный телефон/пароль (или битая ссылка с
+          // DB_GUID), а не «сессия истекла», как для остальных запросов.
+          statusMessages: { 401: 'Неверный телефон, пароль или ссылка доступа' },
+        })
         this.isLoading = false
       })
 
