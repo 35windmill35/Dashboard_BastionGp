@@ -3,11 +3,16 @@ import { getSessionId } from '@/shared/api/session'
 
 // Кастомная ошибка API — хранит код Status (см. таблицу кодов в заметках по
 // API) и сообщение от сервера, чтобы UI мог показать осмысленный текст.
+// data — сам объект Response, даже когда Status != 0 (некоторые методы
+// кладут туда полезные детали ошибки даже при неуспехе — например,
+// confirmCode при неверном коде (Status 27) возвращает Response.AttemptsLeft
+// с оставшимся числом попыток).
 export class ApiError extends Error {
-  constructor(status, message) {
+  constructor(status, message, data) {
     super(message || `API error, status=${status}`)
     this.name = 'ApiError'
     this.status = status
+    this.data = data
   }
 }
 
@@ -46,7 +51,7 @@ async function parseResponse(response) {
   const { Status, Message, Response: data } = body.result || {}
 
   if (Status !== 0) {
-    throw new ApiError(Status, Message)
+    throw new ApiError(Status, Message, data)
   }
 
   return {

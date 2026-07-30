@@ -23,6 +23,12 @@
   text-align: center;
 }
 
+.stepForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -43,6 +49,13 @@
   font-size: 15px;
 }
 
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary, #97979f);
+  text-align: center;
+}
+
 .error {
   margin: 0;
   color: #ff5c5c;
@@ -57,11 +70,37 @@
   color: #fff;
   font-size: 15px;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  display: block;
 }
 
 .submit:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary, #97979f);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.passwordReveal {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--color-border, #3a3a3c);
+  background: var(--color-bg, #0d0d0f);
+  font-family: var(--font-mono, monospace);
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 0.05em;
+  user-select: all;
 }
 
 .registerLink {
