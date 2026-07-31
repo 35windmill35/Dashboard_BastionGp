@@ -3,10 +3,19 @@ import { APP_CODE } from '@/shared/config/api'
 
 // GET /api-v2/auth/loginAppUser?AppCode=...&Params[DB_GUID]=...
 // Authorization: Basic <телефон_без_плюса>:<пароль>
+// Заголовок Params: '{"DB_GUID":"..."}' — см. ⚠ ниже.
 //
 // Ответ (result.Response) — массив баз, доступных пользователю
 // (мультибазность). DBIndex, который потом принимают методы Dashboard/*, —
 // это порядковый индекс элемента в этом массиве, а не PFIRM_ID.
+//
+// ⚠ ТЗ показывает DB_GUID как query-параметр (Params[DB_GUID]=...), но по
+// факту (см. registerByPhone/confirmCode ниже — та же проблема, подтверждена
+// реальным запросом от другого приложения 30.07.2026) бэкенд читает Params
+// из HTTP-заголовка, а не из query-строки. Пользователи жаловались, что
+// DB_GUID «не доходит» именно на этом методе — отправляем DB_GUID ОБОИМИ
+// способами одновременно (заголовок + query), чтобы не зависеть от того,
+// какой из двух документирован верно.
 export async function loginAppUser({ phone, password, dbGuid }) {
   const { data, sessionId, remaining } = await getWithBasicAuth('/api-v2/auth/loginAppUser', {
     username: phone,
@@ -15,6 +24,7 @@ export async function loginAppUser({ phone, password, dbGuid }) {
       AppCode: APP_CODE,
       Params: { DB_GUID: dbGuid },
     },
+    headers: dbGuid ? { Params: JSON.stringify({ DB_GUID: dbGuid }) } : undefined,
   })
 
   return { firms: data, sessionId, remaining }
