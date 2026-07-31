@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { registerByPhone, confirmCode as confirmCodeApi } from '@/entities/user/api/authApi'
 import { authStore } from '@/entities/user/model/authStore'
 import { getErrorMessage } from '@/shared/api/errorMessage'
+import { getDbGuidFromUrl } from '@/shared/config/dbGuid'
 
 // Флоу регистрации по телефону (см. API-v2 formatted.md, разделы
 // «Регистрация пользователя мобильного приложения по телефону» и
@@ -26,7 +27,7 @@ export function useRegister() {
 
     try {
       const normalized = authStore.normalizePhone(rawPhone)
-      const data = await registerByPhone({ phone: normalized })
+      const data = await registerByPhone({ phone: normalized, dbGuid: getDbGuidFromUrl() })
 
       setPhone(normalized)
       setTimeLeft(data?.TimeLeft ?? null)
@@ -57,7 +58,7 @@ export function useRegister() {
       setError(null)
 
       try {
-        const data = await confirmCodeApi({ phone, code })
+        const data = await confirmCodeApi({ phone, code, dbGuid: getDbGuidFromUrl() })
         const password = data?.Password
 
         if (!password) {

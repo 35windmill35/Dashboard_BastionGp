@@ -63,10 +63,17 @@ async function parseResponse(response) {
 
 // GET с Basic Auth — нужен только для auth-методов (loginAppUser,
 // registerByPhone, confirmCode), пока ещё нет SESSIONID.
-export async function getWithBasicAuth(path, { username, password, params } = {}) {
+//
+// headers — доп. HTTP-заголовки. Для registerByPhone/confirmCode DB_GUID
+// передаётся именно так — заголовком "Params" со значением в виде JSON-
+// строки (например '{"DB_GUID":"..."}'), а НЕ query-параметром
+// Params[DB_GUID]=..., как для loginAppUser (см. authApi.js — там два разных
+// метода передачи Params, оба подтверждены на реальных запросах 30.07.2026).
+export async function getWithBasicAuth(path, { username, password, params, headers } = {}) {
   const response = await fetch(buildUrl(path, params), {
     headers: {
       Authorization: `Basic ${btoa(`${username}:${password}`)}`,
+      ...headers,
     },
   })
 
