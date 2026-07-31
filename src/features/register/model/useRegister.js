@@ -20,6 +20,14 @@ export function useRegister() {
   const [error, setError] = useState(null)
   const [timeLeft, setTimeLeft] = useState(null)
   const [attemptsLeft, setAttemptsLeft] = useState(null)
+  // Пароль, сгенерированный сервером в ответ на confirmCode. Приходит ТОЛЬКО
+  // в этом ответе — нигде больше не хранится и повторно не присылается
+  // (не по SMS, не по почте). Поэтому показываем его пользователю ВСЕГДА на
+  // шаге 'done', независимо от того, удался ли автовход — иначе он будет
+  // безвозвратно потерян и пользователь не сможет войти с другого браузера
+  // или устройства.
+  const [password, setPassword] = useState(null)
+  const [loggedIn, setLoggedIn] = useState(false)
 
   const requestCode = useCallback(async (rawPhone) => {
     setIsLoading(true)
@@ -59,26 +67,24 @@ export function useRegister() {
 
       try {
         const data = await confirmCodeApi({ phone, code, dbGuid: getDbGuidFromUrl() })
-        const password = data?.Password
+        const generatedPassword = data?.Password
 
-        if (!password) {
+        if (!generatedPassword) {
           setError('Сервер не вернул пароль — обратитесь к администратору')
           return false
         }
 
         // Логинимся сразу сгенерированным паролем — обычный authStore.login
-        // (тот же loginAppUser, с DB_GUID из адресной строки и т.п.).
-        const loggedIn = await authStore.login(phone, password)
+        // (тот же loginAppUser, с DB_GUID из адресной строки и т.п.). Пароль
+        // запоминаем и показываем на шаге 'done' в любом случае (см.
+        // комментарий у объявления password выше) — вне зависимости от
+        // успеха автовхода.
+        const didLogin = await authStore.login(phone, generatedPassword)
 
-        if (!loggedIn) {
-          // Регистрация прошла, но вход по какой-то причине не удался —
-          // не теряем пароль, показываем его пользователю, чтобы он мог
-          // войти вручную через обычную форму логина.
-          setStep('done')
-          return password
-        }
-
+        setPassword(generatedPassword)
+        setLoggedIn(didLogin)
         setStep('done')
+
         return true
       } catch (err) {
         // На статусе 27 (неверный код) сервер присылает свежий остаток
@@ -110,6 +116,8 @@ export function useRegister() {
     setError(null)
     setTimeLeft(null)
     setAttemptsLeft(null)
+    setPassword(null)
+    setLoggedIn(false)
   }, [])
 
   return {
@@ -119,6 +127,8 @@ export function useRegister() {
     error,
     timeLeft,
     attemptsLeft,
+    password,
+    loggedIn,
     requestCode,
     confirmCode,
     reset,

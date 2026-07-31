@@ -17,7 +17,6 @@ export const RegisterPage = observer(function RegisterPage() {
 
   const [phoneInput, setPhoneInput] = useState('')
   const [codeInput, setCodeInput] = useState('')
-  const [revealedPassword, setRevealedPassword] = useState(null)
 
   const handlePhoneChange = (e) => setPhoneInput(formatPhoneInput(e.target.value))
 
@@ -28,15 +27,10 @@ export const RegisterPage = observer(function RegisterPage() {
 
   const handleConfirmCode = async (e) => {
     e.preventDefault()
-    const result = await register.confirmCode(codeInput)
-
-    if (result === true) {
-      navigate('/')
-    } else if (typeof result === 'string') {
-      // login после регистрации не удался — пароль всё равно получен,
-      // показываем его, чтобы пользователь мог войти вручную.
-      setRevealedPassword(result)
-    }
+    // Дальше — шаг 'done': пароль показывается ВСЕГДА (см. useRegister.js),
+    // переход в дашборд — по явному клику, а не автоматически, чтобы
+    // пользователь точно успел увидеть и сохранить пароль.
+    await register.confirmCode(codeInput)
   }
 
   return (
@@ -100,16 +94,26 @@ export const RegisterPage = observer(function RegisterPage() {
           </form>
         )}
 
-        {register.step === 'done' && revealedPassword && (
+        {register.step === 'done' && register.password && (
           <div className={styles.stepForm}>
             <p className={styles.hint}>
-              Регистрация прошла успешно, но автоматический вход не удался. Ваш пароль:
+              Регистрация завершена. Ваш пароль (сохраните его — он больше нигде не показывается и пригодится для
+              входа с другого устройства):
             </p>
-            <p className={styles.passwordReveal}>{revealedPassword}</p>
-            <p className={styles.hint}>Сохраните его — он понадобится для входа. Дальше войдите обычной формой.</p>
-            <Link className={styles.submit} to={`/login${location.search}`}>
-              Перейти к форме входа
-            </Link>
+            <p className={styles.passwordReveal}>{register.password}</p>
+
+            {register.loggedIn ? (
+              <button type="button" className={styles.submit} onClick={() => navigate('/')}>
+                Сохранил(а) пароль — продолжить в дашборд
+              </button>
+            ) : (
+              <>
+                <p className={styles.hint}>Автоматический вход не удался — войдите этим паролем обычной формой.</p>
+                <Link className={styles.submit} to={`/login${location.search}`}>
+                  Перейти к форме входа
+                </Link>
+              </>
+            )}
           </div>
         )}
 
