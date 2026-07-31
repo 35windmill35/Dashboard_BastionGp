@@ -90,17 +90,55 @@
   padding: 0;
 }
 
+.passwordRow {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
 .passwordReveal {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px dashed var(--color-border, #3a3a3c);
   background: var(--color-bg, #0d0d0f);
   font-family: var(--font-mono, monospace);
-  font-size: 16px;
-  text-align: center;
-  letter-spacing: 0.05em;
+  font-size: 15px;
+  text-align: left;
+  letter-spacing: 0.02em;
   user-select: all;
+  /* Пароль — одна длинная строка без пробелов, обычный word-wrap её не
+     переносит и она вылезает за карточку. overflow-wrap/word-break вместе
+     заставляют браузер переносить даже "неразрывное" слово посимвольно. */
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #3a3a3c);
+  background: var(--color-bg, #0d0d0f);
+  color: var(--color-text-secondary, #97979f);
+  cursor: pointer;
+}
+
+.copyBtn:hover {
+  color: var(--color-accent, #4a7dff);
+  border-color: var(--color-accent, #4a7dff);
+}
+
+.copiedHint {
+  margin: -8px 0 0;
+  font-size: 12px;
+  color: var(--color-positive, #22c55e);
+  text-align: center;
 }
 
 .registerLink {
