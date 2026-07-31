@@ -1,4 +1,4 @@
-import { getWithBasicAuth } from '@/shared/api/httpClient'
+import { getWithBasicAuth, getAuthorized } from '@/shared/api/httpClient'
 import { APP_CODE } from '@/shared/config/api'
 
 // GET /api-v2/auth/loginAppUser?AppCode=...&Params[DB_GUID]=...
@@ -79,4 +79,35 @@ export async function confirmCode({ phone, code, dbGuid }) {
   })
 
   return data
+}
+
+// GET /api-v2/auth/changePassword/<base64(новый пароль)>
+// Authorization: Bearer <SESSIONID>
+//
+// ⚠ Общая документация API-v2 описывает этот метод с ?API_KEY=<...> — это
+// более старая "веб" схема авторизации. Наш мобильный флоу
+// (loginAppUser/SESSIONID) такого API_KEY не использует нигде в проекте,
+// поэтому здесь взято по аналогии со всеми остальными запросами после
+// логина — Bearer SESSIONID (см. getAuthorized в httpClient.js). Это
+// предположение НЕ проверено на реальном стенде (в отличие от DB_GUID через
+// заголовок Params, который проверен скриншотом) — если сервер ждёt другую
+// авторизацию, тут будет 401/403, и это надо будет уточнить отдельно через
+// Postman.
+//
+// base64Password кодируется через encodeURIComponent — символы "+/=" из
+// обычного base64 иначе ломают путь URL (например, "/" воспринялся бы как
+// разделитель сегментов пути).
+//
+// Требования сервера к паролю (см. документацию): не менее 8 и не более 50
+// символов, минимум 1 строчная и 1 заглавная латинские буквы и 1 цифра.
+// Наша форма (см. RegisterPage.jsx) по требованию заказчика проверяет на
+// фронте только длину, без сложности — но сервер может всё равно отклонить
+// слишком простой пароль статусом 6.
+//
+// Ответ — только статус: 0 (успех), 2 (нельзя сменить пароль — пользователь
+// аутентифицирован не по паре логин/пароль), 6 (пароль не прошёл проверку
+// сложности).
+export async function changePassword(newPassword) {
+  const base64Password = btoa(unescape(encodeURIComponent(newPassword)))
+  await getAuthorized(`/api-v2/auth/changePassword/${encodeURIComponent(base64Password)}`)
 }

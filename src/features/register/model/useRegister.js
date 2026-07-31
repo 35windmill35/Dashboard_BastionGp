@@ -1,33 +1,51 @@
 import { useCallback, useState } from 'react'
-import { registerByPhone, confirmCode as confirmCodeApi } from '@/entities/user/api/authApi'
+import { registerByPhone, confirmCode as confirmCodeApi, changePassword as changePasswordApi } from '@/entities/user/api/authApi'
 import { authStore } from '@/entities/user/model/authStore'
 import { getErrorMessage } from '@/shared/api/errorMessage'
 import { getDbGuidFromUrl } from '@/shared/config/dbGuid'
 
+// Требования к паролю — под реальные ограничения бэкенда (см. authApi.js,
+// changePassword: сервер отклоняет статусом 6 пароли короче 8 символов или
+// без заглавной/строчной буквы и цифры). Изначально заказчик просил не
+// требовать сложность («контроль не менее 3-5 символов, сложность не
+// обязательна»), но раз сервер её всё равно требует — проверяем то же самое
+// на фронте, чтобы не гонять пользователя туда-обратно за ошибкой сервера.
+export const PASSWORD_MIN_LENGTH = 8
+export const PASSWORD_MAX_LENGTH = 50
+export const PASSWORD_HINT = 'Минимум 8 символов: заглавная и строчная латинские буквы, цифра'
+
+// Возвращает текст ошибки или null, если пароль подходит под требования
+// сервера. Экспортируется отдельно, чтобы страница могла проверить пароль
+// ДО отправки запроса (не дожидаясь ответа сервера).
+export function validatePassword(password) {
+  if (password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
+    return `Пароль должен быть от ${PASSWORD_MIN_LENGTH} до ${PASSWORD_MAX_LENGTH} символов`
+  }
+  if (!/[a-z]/.test(password)) return 'В пароле должна быть строчная латинская буква'
+  if (!/[A-Z]/.test(password)) return 'В пароле должна быть заглавная латинская буква'
+  if (!/\d/.test(password)) return 'В пароле должна быть цифра'
+  return null
+}
+
 // Флоу регистрации по телефону (см. API-v2 formatted.md, разделы
-// «Регистрация пользователя мобильного приложения по телефону» и
-// «Подтверждение регистрации...»): 1) запросить код по телефону, 2) ввести
-// присланный код, 3) сервер возвращает пароль — логинимся им как обычно
-// через authStore.login (тот же loginAppUser, что и при обычном входе).
+// «Регистрация...», «Подтверждение регистрации...», «Изменение пароля»):
+// 1) запросить код по телефону (registerByPhone), 2) ввести присланный код
+// (confirmCode) — сервер при успехе возвращает СВОЙ сгенерированный пароль,
+// 3) этим временным паролем тихо логинимся (нужна сессия для следующего
+// шага, сам пароль пользователю не показываем — заказчик явно попросил
+// вместо этого дать задать пароль самому), 4) пользователь придумывает
+// пароль (форма + подтверждение), 5) меняем пароль на пользовательский
+// через changePassword — с этого момента именно он рабочий для входа.
 //
 // Отдельный хук (не часть authStore) по аналогии с useDrillThrough — это
-// разовый локальный флоу экрана регистрации, а не часть глобального
-// состояния авторизации, пока не получен реальный пароль и не выполнен login.
+// разовый локальный флоу экрана регистрации.
 export function useRegister() {
-  const [step, setStep] = useState('phone') // 'phone' | 'code' | 'done'
+  const [step, setStep] = useState('phone') // 'phone' | 'code' | 'password' | 'done'
   const [phone, setPhone] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [timeLeft, setTimeLeft] = useState(null)
   const [attemptsLeft, setAttemptsLeft] = useState(null)
-  // Пароль, сгенерированный сервером в ответ на confirmCode. Приходит ТОЛЬКО
-  // в этом ответе — нигде больше не хранится и повторно не присылается
-  // (не по SMS, не по почте). Поэтому показываем его пользователю ВСЕГДА на
-  // шаге 'done', независимо от того, удался ли автовход — иначе он будет
-  // безвозвратно потерян и пользователь не сможет войти с другого браузера
-  // или устройства.
-  const [password, setPassword] = useState(null)
-  const [loggedIn, setLoggedIn] = useState(false)
 
   const requestCode = useCallback(async (rawPhone) => {
     setIsLoading(true)
@@ -67,24 +85,24 @@ export function useRegister() {
 
       try {
         const data = await confirmCodeApi({ phone, code, dbGuid: getDbGuidFromUrl() })
-        const generatedPassword = data?.Password
+        const systemPassword = data?.Password
 
-        if (!generatedPassword) {
+        if (!systemPassword) {
           setError('Сервер не вернул пароль — обратитесь к администратору')
           return false
         }
 
-        // Логинимся сразу сгенерированным паролем — обычный authStore.login
-        // (тот же loginAppUser, с DB_GUID из адресной строки и т.п.). Пароль
-        // запоминаем и показываем на шаге 'done' в любом случае (см.
-        // комментарий у объявления password выше) — вне зависимости от
-        // успеха автовхода.
-        const didLogin = await authStore.login(phone, generatedPassword)
+        // Тихий вход системным паролем — он нужен только чтобы получить
+        // SESSIONID для changePassword на следующем шаге, пользователю
+        // никогда не показывается и не запоминается им.
+        const didLogin = await authStore.login(phone, systemPassword)
 
-        setPassword(generatedPassword)
-        setLoggedIn(didLogin)
-        setStep('done')
+        if (!didLogin) {
+          setError(authStore.error || 'Код подтверждён, но не удалось завершить регистрацию. Попробуйте ещё раз.')
+          return false
+        }
 
+        setStep('password')
         return true
       } catch (err) {
         // На статусе 27 (неверный код) сервер присылает свежий остаток
@@ -110,14 +128,36 @@ export function useRegister() {
     [phone]
   )
 
+  const setNewPassword = useCallback(async (newPassword) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      await changePasswordApi(newPassword)
+      setStep('done')
+      return true
+    } catch (err) {
+      setError(
+        getErrorMessage(err, {
+          fallback: 'Не удалось сохранить пароль. Попробуйте ещё раз.',
+          statusMessages: {
+            2: 'Смена пароля недоступна для этого аккаунта — обратитесь к администратору',
+            6: 'Пароль не подходит по требованиям сервера — попробуйте длиннее или добавьте буквы и цифру',
+          },
+        })
+      )
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   const reset = useCallback(() => {
     setStep('phone')
     setPhone('')
     setError(null)
     setTimeLeft(null)
     setAttemptsLeft(null)
-    setPassword(null)
-    setLoggedIn(false)
   }, [])
 
   return {
@@ -127,10 +167,9 @@ export function useRegister() {
     error,
     timeLeft,
     attemptsLeft,
-    password,
-    loggedIn,
     requestCode,
     confirmCode,
+    setNewPassword,
     reset,
   }
 }

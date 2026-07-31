@@ -2,14 +2,18 @@ import { useState } from 'react'
 import { observer } from 'mobx-react-lite'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { formatPhoneInput } from '@/shared/lib/phoneMask'
-import { useRegister } from '@/features/register/model/useRegister'
+import { useRegister, validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_HINT } from '@/features/register/model/useRegister'
 import styles from './RegisterPage.module.css'
 
 // Регистрация по телефону (см. API-v2 formatted.md — методов нет в самом
 // ТЗ ID-5817, ТЗ описывает только вход уже зарегистрированного пользователя,
-// но по факту у части пользователей ещё нет пароля вовсе). Флоу:
-// 1) телефон → запрос кода (registerByPhone), 2) код из SMS → confirmCode,
-// сервер возвращает пароль, 3) логинимся этим паролем как обычно.
+// но по факту у части пользователей ещё нет пароля вовсе). Флоу (по правкам
+// заказчика от 31.07.2026 — пароль придумывает сам пользователь, а не
+// сервер):
+// 1) телефон → запрос кода (registerByPhone)
+// 2) код из SMS → confirmCode (внутри — тихий вход временным системным
+//    паролем, он нигде не показывается)
+// 3) пользователь придумывает пароль (форма + подтверждение) → changePassword
 export const RegisterPage = observer(function RegisterPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -17,19 +21,9 @@ export const RegisterPage = observer(function RegisterPage() {
 
   const [phoneInput, setPhoneInput] = useState('')
   const [codeInput, setCodeInput] = useState('')
-  const [copied, setCopied] = useState(false)
-
-  const handleCopyPassword = async () => {
-    try {
-      await navigator.clipboard.writeText(register.password)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // Буфер обмена недоступен (нет разрешения/старый браузер) — пароль
-      // всё равно выделяем текстом (user-select: all в CSS), можно скопировать
-      // вручную.
-    }
-  }
+  const [passwordInput, setPasswordInput] = useState('')
+  const [passwordConfirmInput, setPasswordConfirmInput] = useState('')
+  const [passwordFormError, setPasswordFormError] = useState(null)
 
   const handlePhoneChange = (e) => setPhoneInput(formatPhoneInput(e.target.value))
 
@@ -40,10 +34,28 @@ export const RegisterPage = observer(function RegisterPage() {
 
   const handleConfirmCode = async (e) => {
     e.preventDefault()
-    // Дальше — шаг 'done': пароль показывается ВСЕГДА (см. useRegister.js),
-    // переход в дашборд — по явному клику, а не автоматически, чтобы
-    // пользователь точно успел увидеть и сохранить пароль.
+    // Дальше — шаг 'password': confirmCode внутри уже тихо залогинил
+    // временным системным паролем, теперь просим пользователя придумать
+    // свой (см. useRegister.js).
     await register.confirmCode(codeInput)
+  }
+
+  const handleSetPassword = async (e) => {
+    e.preventDefault()
+    setPasswordFormError(null)
+
+    const validationError = validatePassword(passwordInput)
+    if (validationError) {
+      setPasswordFormError(validationError)
+      return
+    }
+
+    if (passwordInput !== passwordConfirmInput) {
+      setPasswordFormError('Пароли не совпадают')
+      return
+    }
+
+    await register.setNewPassword(passwordInput)
   }
 
   return (
@@ -98,7 +110,7 @@ export const RegisterPage = observer(function RegisterPage() {
             {register.error && <p className={styles.error}>{register.error}</p>}
 
             <button className={styles.submit} type="submit" disabled={register.isLoading}>
-              {register.isLoading ? 'Проверяем…' : 'Подтвердить и войти'}
+              {register.isLoading ? 'Проверяем…' : 'Подтвердить'}
             </button>
 
             <button type="button" className={styles.linkButton} onClick={register.reset}>
@@ -107,53 +119,62 @@ export const RegisterPage = observer(function RegisterPage() {
           </form>
         )}
 
-        {register.step === 'done' && register.password && (
-          <div className={styles.stepForm}>
-            <p className={styles.hint}>
-              Регистрация завершена. Ваш пароль (сохраните его — он больше нигде не показывается и пригодится для
-              входа с другого устройства):
-            </p>
-            <div className={styles.passwordRow}>
-              <span className={styles.passwordReveal}>{register.password}</span>
-              <button
-                type="button"
-                className={styles.copyBtn}
-                onClick={handleCopyPassword}
-                title="Скопировать пароль"
-                aria-label="Скопировать пароль"
-              >
-                {copied ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="12" height="12" rx="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                )}
-              </button>
-            </div>
-            {copied && <p className={styles.copiedHint}>Скопировано</p>}
+        {register.step === 'password' && (
+          <form className={styles.stepForm} onSubmit={handleSetPassword}>
+            <p className={styles.hint}>Телефон подтверждён. Придумайте пароль для входа.</p>
+            <p className={styles.hint}>{PASSWORD_HINT}</p>
 
-            {register.loggedIn ? (
-              <button type="button" className={styles.submit} onClick={() => navigate('/')}>
-                Сохранил(а) пароль — продолжить в дашборд
-              </button>
-            ) : (
-              <>
-                <p className={styles.hint}>Автоматический вход не удался — войдите этим паролем обычной формой.</p>
-                <Link className={styles.submit} to={`/login${location.search}`}>
-                  Перейти к форме входа
-                </Link>
-              </>
+            <label className={styles.field}>
+              <span className={styles.label}>Пароль</span>
+              <input
+                className={styles.input}
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                autoComplete="new-password"
+                autoFocus
+                required
+                minLength={PASSWORD_MIN_LENGTH}
+              />
+            </label>
+
+            <label className={styles.field}>
+              <span className={styles.label}>Повторите пароль</span>
+              <input
+                className={styles.input}
+                type="password"
+                value={passwordConfirmInput}
+                onChange={(e) => setPasswordConfirmInput(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={PASSWORD_MIN_LENGTH}
+              />
+            </label>
+
+            {(passwordFormError || register.error) && (
+              <p className={styles.error}>{passwordFormError || register.error}</p>
             )}
+
+            <button className={styles.submit} type="submit" disabled={register.isLoading}>
+              {register.isLoading ? 'Сохраняем…' : 'Сохранить пароль и войти'}
+            </button>
+          </form>
+        )}
+
+        {register.step === 'done' && (
+          <div className={styles.stepForm}>
+            <p className={styles.hint}>Готово! Пароль сохранён, вы вошли в дашборд.</p>
+            <button type="button" className={styles.submit} onClick={() => navigate('/')}>
+              Перейти в дашборд
+            </button>
           </div>
         )}
 
-        <Link className={styles.registerLink} to={`/login${location.search}`}>
-          Уже есть пароль? Войти
-        </Link>
+        {register.step !== 'password' && register.step !== 'done' && (
+          <Link className={styles.registerLink} to={`/login${location.search}`}>
+            Уже есть пароль? Войти
+          </Link>
+        )}
       </div>
     </div>
   )
