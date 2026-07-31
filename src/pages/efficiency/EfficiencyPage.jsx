@@ -181,6 +181,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   data={tFactorData}
                   categoryKey="MASTER_NAME"
                   dataKey="T_FACTOR"
+                  label="Т-фактор"
                   colorBySign
                   valueFormatter={(value) => formatPercent(value)}
                   onBarClick={(item) =>
@@ -216,6 +217,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   data={wastedData}
                   categoryKey="MASTER_NAME"
                   dataKey="WASTED_TIME_MIN"
+                  label="Потери"
                   getColor={(m) => (m.WASTED_TIME_MIN > avgWastedTime ? CHART_COLORS.negative : CHART_COLORS.positive)}
                   valueFormatter={(value) => formatMinutes(value)}
                   onBarClick={(item) =>

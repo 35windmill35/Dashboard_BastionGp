@@ -109,6 +109,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
               data={turnoverData}
               categoryKey="MECHANIC_NAME"
               dataKey="TURNOVER"
+              label="Оборот"
               valueFormatter={(value) => formatCurrency(value)}
               onBarClick={openMechanicDrillThrough}
             />

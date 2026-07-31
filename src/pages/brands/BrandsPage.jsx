@@ -120,6 +120,7 @@ export const BrandsPage = observer(function BrandsPage() {
                   data={sortedMarks}
                   categoryKey="MARK_NAME"
                   dataKey="AVG_CASH"
+                  label="Ср. чек"
                   valueFormatter={(value) => formatCurrency(value)}
                   onBarClick={openMarkDrillThrough}
                 />
@@ -164,6 +165,7 @@ export const BrandsPage = observer(function BrandsPage() {
                 data={top10Models}
                 categoryKey="MODEL_NAME"
                 dataKey="TURNOVER"
+                label="Оборот"
                 valueFormatter={(value) => formatCurrency(value)}
                 onBarClick={openModelDrillThrough}
               />
@@ -196,6 +198,7 @@ export const BrandsPage = observer(function BrandsPage() {
                   data={years}
                   categoryKey="MANUFACTURE_YEAR"
                   dataKey="TURNOVER"
+                  label="Оборот"
                   valueFormatter={(value) => formatCurrency(value)}
                   onBarClick={openYearDrillThrough}
                 />
@@ -206,6 +209,7 @@ export const BrandsPage = observer(function BrandsPage() {
                   data={years}
                   categoryKey="MANUFACTURE_YEAR"
                   dataKey="ACCOUNT_COUNT"
+                  label="Кол-во ЗН"
                   valueFormatter={(value) => formatNumber(value)}
                   onBarClick={openYearDrillThrough}
                 />
@@ -217,6 +221,7 @@ export const BrandsPage = observer(function BrandsPage() {
                 data={years}
                 categoryKey="MANUFACTURE_YEAR"
                 dataKey="AVG_CASH"
+                label="Ср. чек"
                 color={CHART_COLORS.blue}
                 valueFormatter={(value) => formatCurrency(value)}
               />

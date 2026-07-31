@@ -123,6 +123,7 @@ export const MastersPage = observer(function MastersPage() {
               data={masters}
               categoryKey="MASTER_NAME"
               dataKey="TURNOVER"
+              label="Оборот"
               valueFormatter={(value) => formatCurrency(value)}
               onBarClick={openMasterDrillThrough}
               highlightKey="MASTER_ID"
@@ -136,6 +137,7 @@ export const MastersPage = observer(function MastersPage() {
               data={masters}
               categoryKey="MASTER_NAME"
               dataKey="ACCOUNT_COUNT"
+              label="Кол-во ЗН"
               onBarClick={openMasterDrillThrough}
               highlightKey="MASTER_ID"
               highlightValue={selectedMasterId}

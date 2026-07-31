@@ -25,6 +25,8 @@ export function LineChart({
   color = CHART_COLORS.accent,
   valueFormatter,
   onPointClick,
+  // Русское название метрики для подсказки — см. комментарий в BarChart.jsx.
+  label,
 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -39,6 +41,7 @@ export function LineChart({
         <Line
           type="monotone"
           dataKey={dataKey}
+          name={label || dataKey}
           stroke={color}
           strokeWidth={2}
           dot={(dotProps) => {

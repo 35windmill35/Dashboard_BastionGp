@@ -157,6 +157,7 @@ export const OverviewPage = observer(function OverviewPage() {
                   data={monthly}
                   categoryKey="MONTH_LABEL"
                   dataKey="TURNOVER"
+                  label="Оборот"
                   valueFormatter={(value) => formatCurrency(value)}
                   onBarClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
                 />
@@ -167,6 +168,7 @@ export const OverviewPage = observer(function OverviewPage() {
                   data={monthly}
                   categoryKey="MONTH_LABEL"
                   dataKey="ACCOUNT_COUNT"
+                  label="Кол-во ЗН"
                   color={CHART_COLORS.blue}
                   valueFormatter={(value) => formatNumber(value)}
                   onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
@@ -178,6 +180,7 @@ export const OverviewPage = observer(function OverviewPage() {
                   data={monthly}
                   categoryKey="MONTH_LABEL"
                   dataKey="AVG_CASH"
+                  label="Ср. чек"
                   color={CHART_COLORS.positive}
                   valueFormatter={(value) => formatCurrency(value)}
                   onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
@@ -189,6 +192,7 @@ export const OverviewPage = observer(function OverviewPage() {
                   data={monthly}
                   categoryKey="MONTH_LABEL"
                   dataKey="ARTICLE_WORK_RATIO"
+                  label="Уровень товаров"
                   color={CHART_COLORS.purple}
                   valueFormatter={(value) => formatPercent(value)}
                   onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}

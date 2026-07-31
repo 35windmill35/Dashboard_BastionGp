@@ -55,6 +55,11 @@ export function BarChart({
   highlightValue,
   colorBySign = false,
   getColor,
+  // Русское название метрики для подсказки (например, "Оборот") — без него
+  // Recharts по умолчанию подставляет в тултип сырой dataKey (TURNOVER,
+  // AVG_CASH и т.п.), что не по ТЗ (там везде человекочитаемый текст вида
+  // «Год: оборот ₽») и непонятно обычному пользователю.
+  label,
 }) {
   const isVertical = layout === 'vertical'
   const hasHighlight = highlightKey !== undefined && highlightValue !== undefined && highlightValue !== null
@@ -90,6 +95,7 @@ export function BarChart({
         />
         <Bar
           dataKey={dataKey}
+          name={label || dataKey}
           fill={color}
           radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
           onClick={onBarClick}
