@@ -19,10 +19,6 @@ class AuthStore {
     this.restoreFirms()
   }
 
-  // Есть SESSIONID в хранилище и хотя бы одна база — считаем пользователя
-  // залогиненным. Полноценной проверки истечения remaining на фронте не
-  // делаем: если SESSIONID протухнет, следующий запрос к API вернёт
-  // ошибку 401, и это будет обработано на уровне запроса (см. Этап далее).
   get isAuthenticated() {
     return Boolean(getSessionId()) && this.firms.length > 0
   }
@@ -48,16 +44,19 @@ class AuthStore {
 
       const { firms, sessionId, remaining } = await loginAppUser({ phone, password, dbGuid })
 
-      // Сессию сохраняем ДО обновления firms: isAuthenticated зависит от
-      // обоих (getSessionId() && firms.length), а MobX пересчитывает
-      // реакции сразу в момент присвоения observable-поля firms. Если
-      // сессия ещё не сохранена в этот момент, periodsStore/dashboardStore
-      // увидят "не залогинен" и не подгрузят данные до следующего
-      // обновления страницы — обычный порядок операций отсюда важен.
+      if (!firms || firms.length === 0) {
+        runInAction(() => {
+          this.error = 'Для этого аккаунта не найдено ни одной доступной базы. Проверьте ссылку доступа'
+          this.isLoading = false
+        })
+
+        return false
+      }
+
       setSession({ sessionId, remaining })
 
       runInAction(() => {
-        this.firms = firms || []
+        this.firms = firms
         this.dbIndex = 0
         this.isLoading = false
       })
