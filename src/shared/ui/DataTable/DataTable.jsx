@@ -6,7 +6,8 @@ import styles from './DataTable.module.css'
 // drill-through по клику на строку (см. ТЗ: сводные таблицы на всех
 // экранах устроены одинаково — колонки с тултипами, клик по строке).
 //
-// columns: [{ key, header, tooltip?, render?(row), sortable? = true, align? }]
+// columns: [{ key, header, tooltip?, render?(row), sortable? = true, align?, wrap? }]
+// wrap: true — не nowrap, ячейка переносится по словам (для длинных ФИО)
 // data: массив объектов
 // getRowKey: (row) => string|number — по умолчанию берёт row.id либо индекс
 // onRowClick: (row) => void — если передан, строка кликабельна (курсор + hover)
@@ -85,7 +86,17 @@ export function DataTable({ columns, data, getRowKey, onRowClick }) {
               onClick={onRowClick ? () => onRowClick(row) : undefined}
             >
               {columns.map((col) => (
-                <td key={col.key} className={styles.td} style={{ textAlign: col.align || 'left' }}>
+                <td
+                  key={col.key}
+                  className={styles.td}
+                  style={{
+                    textAlign: col.align || 'left',
+                    // wrap: true — длинный текст (напр. ФИО клиента) переносится
+                    // по словам, а не растягивает всю строку в одну линию
+                    whiteSpace: col.wrap ? 'normal' : 'nowrap',
+                    ...(col.wrap ? { maxWidth: col.maxWidth || 220, wordBreak: 'break-word' } : {}),
+                  }}
+                >
                   {col.render ? col.render(row) : row[col.key]}
                 </td>
               ))}

@@ -1,11 +1,22 @@
 .outer {
   position: relative;
+  /* flex:1/min-height:0 нужны, только когда таблица сидит внутри модалки
+     (Modal.module.css .body — flex-колонка) — тянет таблицу на всю
+     доступную высоту, чтобы скролл (оба направления) был у .wrapper, а не
+     "приклеивался" под последней строкой. На обычных страницах, где
+     родитель не задаёт высоту, ни на что не влияет. */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .wrapper {
-  overflow-x: auto;
+  overflow: auto;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
+  flex: 1;
+  min-height: 0;
 }
 
 /* Подсказка «можно скроллить вправо» на узких экранах, где таблица шире
@@ -43,7 +54,7 @@
 
 .th {
   padding: 12px 16px;
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-text-secondary);
   font-weight: 600;
   font-size: 11px;
@@ -51,6 +62,11 @@
   text-transform: uppercase;
   white-space: nowrap;
   border-bottom: 1px solid var(--color-border);
+  /* раз таблица теперь скроллится по вертикали внутри модалки — пусть
+     шапка остаётся видна */
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .sortable {
