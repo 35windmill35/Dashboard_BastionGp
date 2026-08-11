@@ -61,6 +61,27 @@ async function parseResponse(response) {
   }
 }
 
+// Дедупликация одинаковых одновременных запросов. На форме логина/
+// регистрации на практике по одному сабмиту иногда уходят 2 идентичных
+// запроса подряд (наблюдалось даже в чистом инкогнито-окне без расширений,
+// после полного рестарта dev-сервера — источник дублирования на уровне
+// React/браузера не подтверждён, но воспроизводится стабильно). Раз причина
+// не установлена железно, страхуемся на самом нижнем уровне — если запрос с
+// таким же URL+Authorization уже летит, возвращаем тот же промис вместо
+// второго fetch. Ключ хранится, только пока запрос не завершился.
+const inFlightRequests = new Map()
+
+function dedupedFetch(key, performFetch) {
+  if (inFlightRequests.has(key)) return inFlightRequests.get(key)
+
+  const promise = performFetch().finally(() => {
+    inFlightRequests.delete(key)
+  })
+
+  inFlightRequests.set(key, promise)
+  return promise
+}
+
 // GET с Basic Auth — нужен только для auth-методов (loginAppUser,
 // registerByPhone, confirmCode), пока ещё нет SESSIONID.
 //
@@ -70,14 +91,20 @@ async function parseResponse(response) {
 // Params[DB_GUID]=..., как для loginAppUser (см. authApi.js — там два разных
 // метода передачи Params, оба подтверждены на реальных запросах 30.07.2026).
 export async function getWithBasicAuth(path, { username, password, params, headers } = {}) {
-  const response = await fetch(buildUrl(path, params), {
-    headers: {
-      Authorization: `Basic ${btoa(`${username}:${password}`)}`,
-      ...headers,
-    },
-  })
+  const url = buildUrl(path, params)
+  const authHeader = `Basic ${btoa(`${username}:${password}`)}`
+  const key = `${url}::${authHeader}`
 
-  return parseResponse(response)
+  return dedupedFetch(key, async () => {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: authHeader,
+        ...headers,
+      },
+    })
+
+    return parseResponse(response)
+  })
 }
 
 // GET с Bearer SESSIONID — основной способ для всех методов после логина

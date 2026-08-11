@@ -40,22 +40,10 @@ export const OverviewPage = observer(function OverviewPage() {
   const generatedOn = new Date().toLocaleDateString('ru-RU')
 
   // Drill-through для каждой KPI-карточки (кнопка-иконка в углу, отдельно
-  // от drill-down по клику на саму карточку — см. ТЗ §4.1, колонка
-  // «Drill-through»). Все 8 открывают список ЗН за выбранный период без
-  // ID-фильтра (getAccountList не поддерживает фильтр по значению метрики),
-  // но там, где соответствующее поле есть среди отображаемых колонок
-  // DrillThroughModal (SUMMA, T_FACTOR, ARTICLE_WORK_RATIO), список
-  // сортируется по нему по убыванию — так видно, какие ЗН вносят наибольший
-  // вклад в метрику. Для метрик без такой колонки (LABOR_TIME,
-  // AVG_SERVICE_TIME, WASTED_TIME_MIN, «некорректные» ЗН по аккуратности) —
-  // просто список ЗН за период, это осознанное упрощение на MVP.
-  //
-  // SortOrder — число, не строка (см. dashboardApi.getPeriods, там же
-  // проверенный на стенде вызов с SortOrder: 1 — именно так сортируются
-  // периоды от нового к старому). Раньше здесь по ошибке отправлялась
-  // строка 'desc', на которой сервер отвечал 500.
-  const openDrillThrough = (title, sortBy) => {
-    drillThrough.open(sortBy ? { title, sortBy, sortOrder: 1 } : { title })
+  // от drill-down по клику на саму карточку). Сортировка по номеру ЗН —
+  // по умолчанию внутри useDrillThrough.
+  const openDrillThrough = (title) => {
+    drillThrough.open({ title })
   }
 
   return (
@@ -81,7 +69,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.TURNOVER, kpiPrev?.TURNOVER))}
                 tooltip="Суммарный оборот за месяц"
                 onClick={() => navigate('/masters')}
-                onDrillThrough={() => openDrillThrough('Список ЗН за период', 'SUMMA')}
+                onDrillThrough={() => openDrillThrough('Список ЗН за период')}
               />
               <KpiCard
                 title="Заказ-нарядов"
@@ -99,7 +87,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.AVG_CASH, kpiPrev?.AVG_CASH))}
                 tooltip="Оборот ÷ количество ЗН"
                 onClick={() => navigate('/brands')}
-                onDrillThrough={() => openDrillThrough('ЗН с суммами', 'SUMMA')}
+                onDrillThrough={() => openDrillThrough('ЗН с суммами')}
               />
               <KpiCard
                 title="Т-фактор"
@@ -108,7 +96,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
                 tooltip="Загрузка мощностей. Больше 0 — переработка норматива"
                 onClick={() => navigate('/efficiency')}
-                onDrillThrough={() => openDrillThrough('ЗН с расчётом Т-фактора', 'T_FACTOR')}
+                onDrillThrough={() => openDrillThrough('ЗН с расчётом Т-фактора')}
               />
               <KpiCard
                 title="Аккуратность"

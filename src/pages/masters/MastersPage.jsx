@@ -17,7 +17,7 @@ import {
   calcDelta,
   formatDelta,
   isDeltaPositive,
-  cleanName,
+  formatShortName,
 } from '@/shared/lib/formatters'
 import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import styles from './Masters.module.css'
@@ -42,7 +42,7 @@ export const MastersPage = observer(function MastersPage() {
 
   const openMasterDrillThrough = (master) => {
     drillThrough.open({
-      title: `Заказ-наряды мастера «${cleanName(master.MASTER_NAME)}»`,
+      title: `Заказ-наряды мастера «${formatShortName(master.MASTER_NAME)}»`,
       filterString: 'MASTER_ID=?',
       filterParam: [master.MASTER_ID],
     })
@@ -67,7 +67,7 @@ export const MastersPage = observer(function MastersPage() {
               className={`${styles.masterCard} ${selectedMasterId === m.MASTER_ID ? styles.masterCardSelected : ''}`}
               onClick={() => setSelectedMasterId(m.MASTER_ID)}
             >
-              <div className={styles.masterName}>{cleanName(m.MASTER_NAME) || '—'}</div>
+              <div className={styles.masterName}>{formatShortName(m.MASTER_NAME) || '—'}</div>
               <div className={styles.masterMetrics}>
                 <Tooltip text="Доля мастера в обороте автоцентра">
                   <div className={styles.metric}>
@@ -125,6 +125,7 @@ export const MastersPage = observer(function MastersPage() {
               dataKey="TURNOVER"
               label="Оборот"
               valueFormatter={(value) => formatCurrency(value)}
+              categoryFormatter={formatShortName}
               onBarClick={openMasterDrillThrough}
               highlightKey="MASTER_ID"
               highlightValue={selectedMasterId}
@@ -138,6 +139,7 @@ export const MastersPage = observer(function MastersPage() {
               categoryKey="MASTER_NAME"
               dataKey="ACCOUNT_COUNT"
               label="Кол-во ЗН"
+              categoryFormatter={formatShortName}
               onBarClick={openMasterDrillThrough}
               highlightKey="MASTER_ID"
               highlightValue={selectedMasterId}
@@ -149,7 +151,7 @@ export const MastersPage = observer(function MastersPage() {
           <h3 className={styles.tableTitle}>Продуктивность и эффективность</h3>
           <DataTable
             columns={[
-              { key: 'MASTER_NAME', header: 'Мастер', render: (r) => cleanName(r.MASTER_NAME) || '—' },
+              { key: 'MASTER_NAME', header: 'Мастер', render: (r) => formatShortName(r.MASTER_NAME) || '—' },
               { key: 'ACCOUNT_COUNT', header: 'ЗН' },
               { key: 'TURNOVER', header: 'Оборот', render: (r) => formatCurrency(r.TURNOVER) },
               { key: 'AVG_CASH', header: 'Ср. чек', render: (r) => formatCurrency(r.AVG_CASH) },

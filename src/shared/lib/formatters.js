@@ -80,3 +80,20 @@ export function cleanName(value) {
   if (!value) return ''
   return String(value).trim().replace(/\s+/g, ' ')
 }
+
+// "Смурыгин Евгений Михайлович" -> "Смурыгин Е.М." (ФИО мастеров/механиков
+// по всему приложению — см. правки заказчика). Уже сокращённое имя не трогает.
+export function formatShortName(value) {
+  const clean = cleanName(value)
+  if (!clean) return ''
+
+  const [surname, ...rest] = clean.split(' ')
+  if (rest.length === 0) return surname
+
+  const initials = rest
+    .filter((part) => !part.includes('.'))
+    .map((part) => `${part[0]}.`)
+    .join('')
+
+  return initials ? `${surname} ${initials}` : clean
+}

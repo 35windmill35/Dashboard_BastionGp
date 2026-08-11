@@ -35,6 +35,14 @@ class AuthStore {
   }
 
   async login(rawPhone, password) {
+    // Защита от повторного запуска, пока предыдущий логин ещё не завершился
+    // (двойной клик/Enter несколько раз подряд, пока идёт медленный запрос к
+    // API, — на тестовом стенде loginAppUser может занимать 3-4 секунды).
+    // Кнопка на LoginPage и так дизейблится через authStore.isLoading, но
+    // это подстраховка на уровне стора, не зависящая от того, успел ли React
+    // перерисовать кнопку до следующего клика/Enter.
+    if (this.isLoading) return false
+
     this.isLoading = true
     this.error = null
 

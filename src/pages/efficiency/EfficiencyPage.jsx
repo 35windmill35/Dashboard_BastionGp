@@ -8,7 +8,6 @@ import { BarChart } from '@/shared/ui/charts/BarChart'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { AsyncBoundary } from '@/shared/ui/AsyncBoundary/AsyncBoundary'
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
-import { InsightBanner } from '@/shared/ui/InsightBanner/InsightBanner'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
 import {
@@ -20,6 +19,7 @@ import {
   formatDelta,
   isDeltaPositive,
   cleanName,
+  formatShortName,
 } from '@/shared/lib/formatters'
 import { CHART_COLORS } from '@/shared/lib/chartColors'
 import { formatPeriodLabel } from '@/shared/lib/periodFormat'
@@ -62,15 +62,6 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
     ? wastedData.reduce((sum, m) => sum + m.WASTED_TIME_MIN, 0) / wastedData.length
     : 0
 
-  // Сводки-подсказки внизу экрана (см. референс в ТЗ): мастер с
-  // наибольшими и с наименьшими потерями на ЗН. Наглядная подсказка "на
-  // что посмотреть в первую очередь", а не строгая аналитика — считаем
-  // прямо на фронте по уже загруженным данным месяца, без похода в API.
-  const wastedBySizeDesc = [...wastedData].sort((a, b) => b.WASTED_TIME_MIN - a.WASTED_TIME_MIN)
-  const worstMaster = wastedBySizeDesc[0]
-  const bestMaster = wastedBySizeDesc[wastedBySizeDesc.length - 1]
-  const getSurname = (name) => cleanName(name).split(' ')[0] || '—'
-
   // Учитываем узкую панель фильтров над контентом (id стабильный, в
   // отличие от хэшированного CSS-модуль класса — см. widgets/app-sidebar/AppTopBar.jsx).
   const scrollToElement = (ref) => {
@@ -95,7 +86,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
 
   const openMasterDrillThrough = (master, subtitle) => {
     drillThrough.open({
-      title: `${subtitle} мастера «${cleanName(master.MASTER_NAME)}»`,
+      title: `${subtitle} мастера «${formatShortName(master.MASTER_NAME)}»`,
       filterString: 'MASTER_ID=?',
       filterParam: [master.MASTER_ID],
     })
@@ -183,6 +174,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   dataKey="T_FACTOR"
                   label="Т-фактор"
                   colorBySign
+                  categoryFormatter={formatShortName}
                   valueFormatter={(value) => formatPercent(value)}
                   onBarClick={(item) =>
                     tFactorMode === 'drilldown'
@@ -219,6 +211,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   dataKey="WASTED_TIME_MIN"
                   label="Потери"
                   getColor={(m) => (m.WASTED_TIME_MIN > avgWastedTime ? CHART_COLORS.negative : CHART_COLORS.positive)}
+                  categoryFormatter={formatShortName}
                   valueFormatter={(value) => formatMinutes(value)}
                   onBarClick={(item) =>
                     wastedMode === 'drilldown'
@@ -235,16 +228,16 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                 columns={[
                   { key: 'MARK_NAME', header: 'Марка', render: (r) => cleanName(r.MARK_NAME) || '—' },
                   {
-                    key: 'AVG_SERVICE_TIME',
-                    header: 'Время ремонта',
-                    tooltip: 'Среднее время ремонта по марке',
-                    render: (r) => formatServiceTime(r.AVG_SERVICE_TIME),
-                  },
-                  {
                     key: 'LABOR_TIME',
                     header: 'Выработка',
                     tooltip: 'Суммарные нормо-часы',
                     render: (r) => formatHours(r.LABOR_TIME),
+                  },
+                  {
+                    key: 'AVG_SERVICE_TIME',
+                    header: 'Ср.время ремонта',
+                    tooltip: 'Среднее время ремонта по марке',
+                    render: (r) => formatServiceTime(r.AVG_SERVICE_TIME),
                   },
                   {
                     key: 'T_FACTOR',
@@ -270,21 +263,6 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                 onRowClick={openMarkDrillThrough}
               />
             </div>
-
-            {worstMaster && bestMaster && worstMaster !== bestMaster && (
-              <div className={styles.insightsRow}>
-                <InsightBanner
-                  variant="warning"
-                  title={`Высокие потери у ${getSurname(worstMaster.MASTER_NAME)}`}
-                  description={`${formatMinutes(worstMaster.WASTED_TIME_MIN)} потерь на ЗН — существенно выше среднего (${formatMinutes(avgWastedTime)}). Требует разбора.`}
-                />
-                <InsightBanner
-                  variant="success"
-                  title={`${getSurname(bestMaster.MASTER_NAME)} — минимальные потери`}
-                  description={`Всего ${formatMinutes(bestMaster.WASTED_TIME_MIN)} потерь, аккуратность ${formatPercent(bestMaster.ACCURACY)}. Лучший показатель по потерям среди мастеров.`}
-                />
-              </div>
-            )}
           </>
         )}
       </AsyncBoundary>

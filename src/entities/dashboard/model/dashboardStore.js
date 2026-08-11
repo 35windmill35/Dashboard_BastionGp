@@ -3,6 +3,7 @@ import { getDashboardData } from '../api/dashboardApi'
 import { authStore } from '@/entities/user/model/authStore'
 import { periodsStore } from './periodsStore'
 import { getErrorMessage } from '@/shared/api/errorMessage'
+import { formatMonthShortLabel } from '@/shared/lib/periodFormat'
 
 class DashboardStore {
   data = null
@@ -33,6 +34,21 @@ class DashboardStore {
         if (periodYm) this.load(periodYm)
       }
     )
+
+    // Логаут — сбрасываем данные и ошибку прошлой сессии, чтобы после
+    // повторного login() экран не показал на миг старые цифры/ошибку от
+    // предыдущего пользователя, пока не придёт ответ нового запроса.
+    reaction(
+      () => authStore.isAuthenticated,
+      (isAuthenticated) => {
+        if (!isAuthenticated) {
+          this.data = null
+          this.prevPeriodData = null
+          this.error = null
+          this.isLoading = false
+        }
+      }
+    )
   }
 
   // Загрузка/ошибка "в широком смысле" — учитывает и загрузку самого
@@ -54,7 +70,10 @@ class DashboardStore {
   // monthly в ответе идёт от нового периода к старому — для графика
   // "слева направо по времени" разворачиваем.
   get monthly() {
-    return this.data?.monthly ? [...this.data.monthly].reverse() : []
+    if (!this.data?.monthly) return []
+    // MONTH_LABEL от сервера приходит по-английски (Jun.25) — переписываем
+    // на русский по PERIOD_YM, см. правки заказчика.
+    return [...this.data.monthly].reverse().map((m) => ({ ...m, MONTH_LABEL: formatMonthShortLabel(m.PERIOD_YM) }))
   }
 
   get kpi() {

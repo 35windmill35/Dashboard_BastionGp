@@ -39,6 +39,7 @@ export function ScatterChart({
   color = CHART_COLORS.accent,
   getColor,
   onPointClick,
+  nameFormatter,
 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -78,7 +79,11 @@ export function ScatterChart({
                   fontSize: 12,
                 }}
               >
-                {nameKey && <div style={{ fontWeight: 600 }}>{point[nameKey]}</div>}
+                {nameKey && (
+                  <div style={{ fontWeight: 600 }}>
+                    {nameFormatter ? nameFormatter(point[nameKey]) : point[nameKey]}
+                  </div>
+                )}
                 <div>{xLabel}: {point[xKey]}</div>
                 <div>{yLabel}: {point[yKey]}</div>
               </div>

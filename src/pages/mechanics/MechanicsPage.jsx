@@ -20,7 +20,7 @@ import {
   calcDelta,
   formatDelta,
   isDeltaPositive,
-  cleanName,
+  formatShortName,
 } from '@/shared/lib/formatters'
 import styles from './Mechanics.module.css'
 
@@ -48,7 +48,9 @@ export const MechanicsPage = observer(function MechanicsPage() {
     ? withAccuracy.reduce((sum, m) => sum + m.ACCURACY, 0) / withAccuracy.length
     : null
 
-  const turnoverData = mechanics.filter((m) => m.TURNOVER !== null && m.TURNOVER !== undefined)
+  const turnoverData = mechanics
+    .filter((m) => m.TURNOVER !== null && m.TURNOVER !== undefined)
+    .sort((a, b) => b.TURNOVER - a.TURNOVER)
 
   const scatterData = mechanics.filter(
     (m) =>
@@ -64,7 +66,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
   // сервера 26.07.2026 (см. dashboardApi.js).
   const openMechanicDrillThrough = (mechanic) => {
     drillThrough.open({
-      title: `Заказ-наряды механика «${cleanName(mechanic.MECHANIC_NAME)}»`,
+      title: `Заказ-наряды механика «${formatShortName(mechanic.MECHANIC_NAME)}»`,
       filterString: 'MAIN_MECHANIC_ID=?',
       filterParam: [mechanic.MECHANIC_ID],
     })
@@ -111,6 +113,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
               dataKey="TURNOVER"
               label="Оборот"
               valueFormatter={(value) => formatCurrency(value)}
+              categoryFormatter={formatShortName}
               onBarClick={openMechanicDrillThrough}
             />
           </div>
@@ -126,6 +129,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
               yLabel="Аккуратность, %"
               getColor={(m) => (m.ACCURACY >= 75 ? CHART_COLORS.positive : CHART_COLORS.negative)}
               onPointClick={openMechanicDrillThrough}
+              nameFormatter={formatShortName}
             />
             <p className={styles.scatterNote}>Оптимум — левый верх: меньше потерь, выше аккуратность</p>
           </div>
@@ -135,7 +139,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
           <h3 className={styles.tableTitle}>Полная таблица механиков</h3>
           <DataTable
             columns={[
-              { key: 'MECHANIC_NAME', header: 'Механик', render: (r) => cleanName(r.MECHANIC_NAME) || '—' },
+              { key: 'MECHANIC_NAME', header: 'Механик', render: (r) => formatShortName(r.MECHANIC_NAME) || '—' },
               {
                 key: 'ACCOUNT_COUNT',
                 header: 'ЗН',

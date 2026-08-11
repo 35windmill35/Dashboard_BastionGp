@@ -37,6 +37,25 @@ export const BrandsPage = observer(function BrandsPage() {
   const marksPieData = useMemo(() => groupTopNWithOthers(marks, 'MARK_NAME', 'TURNOVER', 9), [marks])
   const sortedMarks = useMemo(() => [...marks].sort((a, b) => (b.TURNOVER || 0) - (a.TURNOVER || 0)), [marks])
 
+  // Средний чек по тем же топ-9 маркам, что и в круговой диаграмме слева
+  // (просьба заказчика — иначе на двух графиках разные наборы марок).
+  // Для "Прочих" считаем не среднее из средних, а честный взвешенный чек:
+  // сумма оборота / сумма ЗН по всем маркам, не попавшим в топ-9.
+  const avgCashData = useMemo(() => {
+    const top9 = sortedMarks.slice(0, 9)
+    const rest = sortedMarks.slice(9)
+
+    const data = top9.map((m) => ({ name: cleanName(m.MARK_NAME), value: m.AVG_CASH || 0, MARK_ID: m.MARK_ID }))
+
+    if (rest.length) {
+      const restTurnover = rest.reduce((sum, m) => sum + (m.TURNOVER || 0), 0)
+      const restCount = rest.reduce((sum, m) => sum + (m.ACCOUNT_COUNT || 0), 0)
+      data.push({ name: 'Прочие', value: restCount ? restTurnover / restCount : 0 })
+    }
+
+    return data
+  }, [sortedMarks])
+
   const filteredModels = markFilter ? models.filter((m) => m.MARK_ID === markFilter.id) : models
   const top10Models = useMemo(
     () => [...filteredModels].sort((a, b) => (b.TURNOVER || 0) - (a.TURNOVER || 0)).slice(0, 10),
@@ -117,12 +136,16 @@ export const BrandsPage = observer(function BrandsPage() {
                 <h3 className={styles.chartTitle}>Средний чек по маркам</h3>
                 <BarChart
                   layout="vertical"
-                  data={sortedMarks}
-                  categoryKey="MARK_NAME"
-                  dataKey="AVG_CASH"
+                  data={avgCashData}
+                  categoryKey="name"
+                  dataKey="value"
                   label="Ср. чек"
                   valueFormatter={(value) => formatCurrency(value)}
-                  onBarClick={openMarkDrillThrough}
+                  onBarClick={(item) => {
+                    // "Прочие" не кликабельны — нет своего MARK_ID
+                    const mark = marks.find((m) => m.MARK_ID === item.MARK_ID)
+                    if (mark) openMarkDrillThrough(mark)
+                  }}
                 />
               </div>
             </div>

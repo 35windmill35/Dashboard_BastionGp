@@ -1,7 +1,7 @@
 import { Modal } from '@/shared/ui/Modal/Modal'
 import { AsyncBoundary } from '@/shared/ui/AsyncBoundary/AsyncBoundary'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
-import { formatCurrency, formatPercent, cleanName } from '@/shared/lib/formatters'
+import { formatCurrency, formatPercent, cleanName, formatShortName } from '@/shared/lib/formatters'
 
 // Модалка со списком ЗН (drill-through). Использовать вместе с
 // useDrillThrough — см. пример в этом хуке.
@@ -18,8 +18,8 @@ const COLUMNS = [
     header: 'Марка / модель',
     render: (r) => [cleanName(r.MARK_NAME), cleanName(r.MODEL_NAME)].filter(Boolean).join(' / ') || '—',
   },
-  { key: 'MASTER_NAME', header: 'Мастер', render: (r) => cleanName(r.MASTER_NAME) || '—' },
-  { key: 'MAIN_MECHANIC_NAME', header: 'Механик', render: (r) => cleanName(r.MAIN_MECHANIC_NAME) || '—' },
+  { key: 'MASTER_NAME', header: 'Мастер', render: (r) => formatShortName(r.MASTER_NAME) || '—' },
+  { key: 'MAIN_MECHANIC_NAME', header: 'Механик', render: (r) => formatShortName(r.MAIN_MECHANIC_NAME) || '—' },
   { key: 'SUMMA', header: 'Сумма', render: (r) => formatCurrency(r.SUMMA) },
   { key: 'ARTICLE_WORK_RATIO', header: 'Доля товаров', render: (r) => formatPercent(r.ARTICLE_WORK_RATIO) },
   { key: 'T_FACTOR', header: 'Т-фактор', render: (r) => formatPercent(r.T_FACTOR) },

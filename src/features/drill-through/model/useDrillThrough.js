@@ -31,11 +31,13 @@ export function useDrillThrough() {
     setError(null)
 
     try {
+      // По умолчанию — по номеру ЗН (заказчик попросил везде так), кто
+      // вызывает open() без своего sortBy.
       const data = await getAccountList(periodsStore.selectedPeriodYm, authStore.dbIndex, {
         filterString,
         filterParam,
-        sortBy,
-        sortOrder,
+        sortBy: sortBy || 'ACCOUNT_CODE',
+        sortOrder: sortBy ? sortOrder : 1,
       })
 
       // Структура подтверждена на реальном стенде 26.07.2026: см.

@@ -20,7 +20,17 @@ class PeriodsStore {
     reaction(
       () => [authStore.isAuthenticated, authStore.dbIndex],
       ([isAuthenticated, dbIndex]) => {
-        if (isAuthenticated) this.load(dbIndex)
+        if (isAuthenticated) {
+          this.load(dbIndex)
+        } else {
+          // Логаут — сбрасываем список периодов и старую ошибку. Без этого
+          // после logout()/повторного login() на экране могла на миг мелькать
+          // "стухшая" ошибка или период из предыдущей сессии, пока не придёт
+          // ответ нового запроса.
+          this.periods = []
+          this.selectedPeriodYm = null
+          this.error = null
+        }
       },
       { fireImmediately: true }
     )

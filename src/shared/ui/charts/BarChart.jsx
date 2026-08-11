@@ -60,6 +60,9 @@ export function BarChart({
   // AVG_CASH и т.п.), что не по ТЗ (там везде человекочитаемый текст вида
   // «Год: оборот ₽») и непонятно обычному пользователю.
   label,
+  // Форматирует подпись категории на оси и в тултипе, не трогая сами данные
+  // (нужно для сокращения ФИО мастеров/механиков до "Фамилия И.О.")
+  categoryFormatter,
 }) {
   const isVertical = layout === 'vertical'
   const hasHighlight = highlightKey !== undefined && highlightValue !== undefined && highlightValue !== null
@@ -78,6 +81,7 @@ export function BarChart({
             <YAxis
               type="category"
               dataKey={categoryKey}
+              tickFormatter={categoryFormatter}
               stroke={CHART_COLORS.textSecondary}
               fontSize={12}
               width={140}
@@ -85,12 +89,13 @@ export function BarChart({
           </>
         ) : (
           <>
-            <XAxis dataKey={categoryKey} stroke={CHART_COLORS.textSecondary} fontSize={12} />
+            <XAxis dataKey={categoryKey} tickFormatter={categoryFormatter} stroke={CHART_COLORS.textSecondary} fontSize={12} />
             <YAxis stroke={CHART_COLORS.textSecondary} fontSize={12} />
           </>
         )}
         <RTooltip
           formatter={valueFormatter}
+          labelFormatter={categoryFormatter}
           contentStyle={{ background: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}` }}
         />
         <Bar
