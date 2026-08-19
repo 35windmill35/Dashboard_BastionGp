@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { formatPhoneInput } from '@/shared/lib/phoneMask'
 import { useRegister, validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_HINT } from '@/features/register/model/useRegister'
+import { PasswordInput } from '@/shared/ui/PasswordInput/PasswordInput'
 import styles from './RegisterPage.module.css'
 
 // Регистрация по телефону (см. API-v2 formatted.md — методов нет в самом
@@ -126,9 +127,8 @@ export const RegisterPage = observer(function RegisterPage() {
 
             <label className={styles.field}>
               <span className={styles.label}>Пароль</span>
-              <input
+              <PasswordInput
                 className={styles.input}
-                type="password"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 autoComplete="new-password"
@@ -140,9 +140,8 @@ export const RegisterPage = observer(function RegisterPage() {
 
             <label className={styles.field}>
               <span className={styles.label}>Повторите пароль</span>
-              <input
+              <PasswordInput
                 className={styles.input}
-                type="password"
                 value={passwordConfirmInput}
                 onChange={(e) => setPasswordConfirmInput(e.target.value)}
                 autoComplete="new-password"

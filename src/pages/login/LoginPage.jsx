@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { authStore } from '@/entities/user/model/authStore'
 import { formatPhoneInput } from '@/shared/lib/phoneMask'
+import { PasswordInput } from '@/shared/ui/PasswordInput/PasswordInput'
 import styles from './LoginPage.module.css'
 
 export const LoginPage = observer(function LoginPage() {
@@ -45,9 +46,8 @@ export const LoginPage = observer(function LoginPage() {
 
         <label className={styles.field}>
           <span className={styles.label}>Пароль</span>
-          <input
+          <PasswordInput
             className={styles.input}
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
