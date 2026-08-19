@@ -12,7 +12,6 @@ import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
 import { formatCurrency, formatPercent, formatNumber, cleanName } from '@/shared/lib/formatters'
 import { CHART_COLORS } from '@/shared/lib/chartColors'
-import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import styles from './Brands.module.css'
 
 const TABS = [
@@ -91,7 +90,7 @@ export const BrandsPage = observer(function BrandsPage() {
     setActiveTab('models')
   }
 
-  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+  const periodLabel = periodsStore.selectedPeriodLabel
 
   return (
     <div className={styles.page}>
@@ -114,7 +113,7 @@ export const BrandsPage = observer(function BrandsPage() {
         isLoading={dashboardStore.isLoadingAny}
         error={dashboardStore.errorAny}
         isEmpty={!dashboardStore.isLoadingAny && marks.length === 0}
-        onRetry={() => periodsStore.selectedPeriodYm && dashboardStore.load(periodsStore.selectedPeriodYm)}
+        onRetry={() => periodsStore.selectedPeriod && dashboardStore.load(periodsStore.selectedPeriod)}
       >
         {activeTab === 'marks' && (
           <div className={styles.tabContent}>
@@ -216,7 +215,9 @@ export const BrandsPage = observer(function BrandsPage() {
           <div className={styles.tabContent}>
             <div className={styles.chartsRow}>
               <div className={styles.chartWrapper}>
-                <h3 className={styles.chartTitle}>Оборот по годам</h3>
+                <h3 className={styles.chartTitle}>
+                  Оборот по годам <span className={styles.badge}>выпуска</span>
+                </h3>
                 <BarChart
                   data={years}
                   categoryKey="MANUFACTURE_YEAR"
@@ -227,7 +228,9 @@ export const BrandsPage = observer(function BrandsPage() {
                 />
               </div>
               <div className={styles.chartWrapper}>
-                <h3 className={styles.chartTitle}>Кол-во ЗН по годам</h3>
+                <h3 className={styles.chartTitle}>
+                  Кол-во ЗН по годам <span className={styles.badge}>выпуска</span>
+                </h3>
                 <BarChart
                   data={years}
                   categoryKey="MANUFACTURE_YEAR"
@@ -239,7 +242,9 @@ export const BrandsPage = observer(function BrandsPage() {
               </div>
             </div>
             <div className={styles.chartWrapper}>
-              <h3 className={styles.chartTitle}>Средний чек по годам</h3>
+              <h3 className={styles.chartTitle}>
+                Средний чек по годам <span className={styles.badge}>выпуска</span>
+              </h3>
               <LineChart
                 data={years}
                 categoryKey="MANUFACTURE_YEAR"

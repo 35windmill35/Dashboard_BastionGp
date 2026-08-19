@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite'
 import { NavLink } from 'react-router-dom'
 import { periodsStore } from '@/entities/dashboard/model/periodsStore'
-import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import { IconGrid, IconTrendUp, IconUsers, IconWrench, IconCar } from './icons'
 import styles from './AppSidebar.module.css'
 
@@ -19,7 +18,7 @@ const NAV_ITEMS = [
 // AppTopBar (см. этот же файл), т.к. в референсе это два разных визуальных
 // блока (сайдбар — только меню, фильтры — узкая полоса над контентом).
 export const AppSidebar = observer(function AppSidebar() {
-  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+  const periodLabel = periodsStore.selectedPeriodLabel
 
   return (
     <aside className={styles.sidebar}>

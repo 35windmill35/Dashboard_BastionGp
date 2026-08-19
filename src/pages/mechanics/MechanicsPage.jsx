@@ -10,7 +10,6 @@ import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
 import { CHART_COLORS } from '@/shared/lib/chartColors'
-import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import {
   formatNumber,
   formatCurrency,
@@ -72,7 +71,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
     })
   }
 
-  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+  const periodLabel = periodsStore.selectedPeriodLabel
 
   return (
     <div className={styles.page}>
@@ -82,7 +81,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
         isLoading={dashboardStore.isLoadingAny}
         error={dashboardStore.errorAny}
         isEmpty={!dashboardStore.isLoadingAny && mechanics.length === 0}
-        onRetry={() => periodsStore.selectedPeriodYm && dashboardStore.load(periodsStore.selectedPeriodYm)}
+        onRetry={() => periodsStore.selectedPeriod && dashboardStore.load(periodsStore.selectedPeriod)}
       >
         <div className={styles.kpiGrid}>
           <KpiCard title="Механиков" value={formatNumber(mechanicCount)} tooltip="Число механиков с ЗН" />

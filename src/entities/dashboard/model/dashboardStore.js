@@ -3,7 +3,7 @@ import { getDashboardData } from '../api/dashboardApi'
 import { authStore } from '@/entities/user/model/authStore'
 import { periodsStore } from './periodsStore'
 import { getErrorMessage } from '@/shared/api/errorMessage'
-import { formatMonthShortLabel } from '@/shared/lib/periodFormat'
+import { formatTrendLabel } from '@/shared/lib/periodFormat'
 
 class DashboardStore {
   data = null
@@ -29,9 +29,9 @@ class DashboardStore {
     // (глобальные фильтры из шапки, см. ТЗ §3). Страницам/виджетам не нужно
     // самим дёргать load() — только читать this.data.
     reaction(
-      () => [periodsStore.selectedPeriodYm, authStore.dbIndex],
-      ([periodYm]) => {
-        if (periodYm) this.load(periodYm)
+      () => [periodsStore.selectedPeriod, authStore.dbIndex],
+      ([period]) => {
+        if (period) this.load(period)
       }
     )
 
@@ -68,12 +68,14 @@ class DashboardStore {
   }
 
   // monthly в ответе идёт от нового периода к старому — для графика
-  // "слева направо по времени" разворачиваем.
+  // "слева направо по времени" разворачиваем. Несмотря на название, теперь
+  // тут могут быть и кварталы/года (смотря какой periodMode выбран) — см.
+  // formatTrendLabel.
   get monthly() {
     if (!this.data?.monthly) return []
     // MONTH_LABEL от сервера приходит по-английски (Jun.25) — переписываем
-    // на русский по PERIOD_YM, см. правки заказчика.
-    return [...this.data.monthly].reverse().map((m) => ({ ...m, MONTH_LABEL: formatMonthShortLabel(m.PERIOD_YM) }))
+    // на русский, см. правки заказчика.
+    return [...this.data.monthly].reverse().map((m) => ({ ...m, MONTH_LABEL: formatTrendLabel(m) }))
   }
 
   get kpi() {
@@ -120,12 +122,13 @@ class DashboardStore {
     return (this.data?.years || []).filter((y) => y.MANUFACTURE_YEAR > 0)
   }
 
-  async load(periodYm) {
+  // period — { type: 'month'|'quarter'|'year', value }, см. periodsStore.selectedPeriod
+  async load(period) {
     this.isLoading = true
     this.error = null
 
     try {
-      const data = await getDashboardData(periodYm, authStore.dbIndex)
+      const data = await getDashboardData(period, authStore.dbIndex)
 
       runInAction(() => {
         this.data = data
@@ -142,10 +145,20 @@ class DashboardStore {
     // только ради mechanics (Δ Т-фактора). Ошибка/отсутствие предыдущего
     // периода намеренно не отражаются в isLoading/error: это необязательное
     // улучшение таблицы, а не критичные для экрана данные.
-    this.loadPrevPeriod(periodYm)
+    this.loadPrevPeriod(period)
   }
 
-  async loadPrevPeriod(periodYm) {
+  async loadPrevPeriod(period) {
+    // "Предыдущий период" через periodsStore.previousPeriodYm посчитан
+    // только для помесячного режима — для года/квартала своего понятия
+    // "предыдущий" в списке периодов нет, Δ там просто не показываем.
+    if (period.type !== 'month') {
+      runInAction(() => {
+        this.prevPeriodData = null
+      })
+      return
+    }
+
     const prevPeriodYm = periodsStore.previousPeriodYm
 
     if (!prevPeriodYm) {
@@ -156,12 +169,13 @@ class DashboardStore {
     }
 
     try {
-      const data = await getDashboardData(prevPeriodYm, authStore.dbIndex)
+      const data = await getDashboardData({ type: 'month', value: prevPeriodYm }, authStore.dbIndex)
 
       runInAction(() => {
         // Проверка на гонку: пока грузился предыдущий период, пользователь
         // мог уже переключить период ещё раз — тогда этот ответ устарел.
-        if (periodsStore.selectedPeriodYm === periodYm) {
+        const current = periodsStore.selectedPeriod
+        if (current?.type === 'month' && current.value === period.value) {
           this.prevPeriodData = data
         }
       })

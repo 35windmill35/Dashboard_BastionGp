@@ -19,7 +19,6 @@ import {
   isDeltaPositive,
   formatShortName,
 } from '@/shared/lib/formatters'
-import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import styles from './Masters.module.css'
 
 // Экран «Мастера» (ТЗ §4.3). Карточка мастера = drill-down: локальное
@@ -48,7 +47,7 @@ export const MastersPage = observer(function MastersPage() {
     })
   }
 
-  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+  const periodLabel = periodsStore.selectedPeriodLabel
 
   return (
     <div className={styles.page}>
@@ -58,7 +57,7 @@ export const MastersPage = observer(function MastersPage() {
         isLoading={dashboardStore.isLoadingAny}
         error={dashboardStore.errorAny}
         isEmpty={!dashboardStore.isLoadingAny && masters.length === 0}
-        onRetry={() => periodsStore.selectedPeriodYm && dashboardStore.load(periodsStore.selectedPeriodYm)}
+        onRetry={() => periodsStore.selectedPeriod && dashboardStore.load(periodsStore.selectedPeriod)}
       >
         <div className={styles.cardsGrid}>
           {masters.map((m) => (

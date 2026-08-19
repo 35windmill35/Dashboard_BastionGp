@@ -20,7 +20,15 @@ class AuthStore {
   }
 
   get isAuthenticated() {
-    return Boolean(getSessionId()) && this.firms.length > 0
+    // Важно не свернуть в "Boolean(getSessionId()) && this.firms.length > 0" —
+    // из-за короткого замыкания this.firms читается не всегда, и MobX не
+    // всегда успевает подписаться на него как на зависимость computed'а
+    // (если самый первый вызов этого геттера случился до логина, когда
+    // getSessionId() ещё false — правая часть вообще не читается, и
+    // isAuthenticated навсегда "залипает" в false, даже после логина).
+    // Читаем firms.length безусловно, чтобы зависимость трекалась всегда.
+    const hasFirms = this.firms.length > 0
+    return Boolean(getSessionId()) && hasFirms
   }
 
   // Текущая выбранная база (для шапки — FIRM_SHORT_NAME, и для запросов —

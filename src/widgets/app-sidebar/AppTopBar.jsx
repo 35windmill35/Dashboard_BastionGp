@@ -28,17 +28,62 @@ export const AppTopBar = observer(function AppTopBar() {
       )}
 
       {periodsStore.periodOptions.length > 0 && (
-        <select
-          className={styles.select}
-          value={periodsStore.selectedPeriodYm || ''}
-          onChange={(e) => periodsStore.setSelectedPeriod(Number(e.target.value))}
-        >
-          {periodsStore.periodOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <>
+          {/* Первый комбобокс — режим (Месяц/Квартал/Год), второй — само
+              значение в этом режиме. Бэкенд с 16.08.2026 принимает один из
+              PERIOD_YM/PERIOD_YQ/PERIOD_YEAR (см. dashboardApi.js). */}
+          <select
+            className={styles.select}
+            value={periodsStore.periodMode}
+            onChange={(e) => periodsStore.setPeriodMode(e.target.value)}
+          >
+            <option value="month">По месяцу</option>
+            <option value="quarter">По кварталу</option>
+            <option value="year">По году</option>
+          </select>
+
+          {periodsStore.periodMode === 'month' && (
+            <select
+              className={styles.select}
+              value={periodsStore.selectedPeriodYm || ''}
+              onChange={(e) => periodsStore.setSelectedPeriod(Number(e.target.value))}
+            >
+              {periodsStore.periodOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {periodsStore.periodMode === 'quarter' && (
+            <select
+              className={styles.select}
+              value={periodsStore.selectedYq || ''}
+              onChange={(e) => periodsStore.setSelectedQuarter(Number(e.target.value))}
+            >
+              {periodsStore.quarterOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {periodsStore.periodMode === 'year' && (
+            <select
+              className={styles.select}
+              value={periodsStore.selectedYear || ''}
+              onChange={(e) => periodsStore.setSelectedYear(Number(e.target.value))}
+            >
+              {periodsStore.yearOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
+        </>
       )}
 
       <button className={styles.logout} type="button" onClick={() => authStore.logout()}>

@@ -22,7 +22,6 @@ import {
   formatShortName,
 } from '@/shared/lib/formatters'
 import { CHART_COLORS } from '@/shared/lib/chartColors'
-import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import styles from './Efficiency.module.css'
 
 // Экран «Эффективность» (ТЗ §4.2). Про клик на графиках «Т-фактор» и
@@ -92,7 +91,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
     })
   }
 
-  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+  const periodLabel = periodsStore.selectedPeriodLabel
 
   return (
     <div className={styles.page}>
@@ -105,7 +104,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
         isLoading={dashboardStore.isLoadingAny}
         error={dashboardStore.errorAny}
         isEmpty={!dashboardStore.isLoadingAny && !kpi}
-        onRetry={() => periodsStore.selectedPeriodYm && dashboardStore.load(periodsStore.selectedPeriodYm)}
+        onRetry={() => periodsStore.selectedPeriod && dashboardStore.load(periodsStore.selectedPeriod)}
       >
         {kpi && (
           <>

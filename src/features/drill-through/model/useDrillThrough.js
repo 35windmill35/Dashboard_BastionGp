@@ -33,7 +33,7 @@ export function useDrillThrough() {
     try {
       // По умолчанию — по номеру ЗН (заказчик попросил везде так), кто
       // вызывает open() без своего sortBy.
-      const data = await getAccountList(periodsStore.selectedPeriodYm, authStore.dbIndex, {
+      const data = await getAccountList(periodsStore.selectedPeriod, authStore.dbIndex, {
         filterString,
         filterParam,
         sortBy: sortBy || 'ACCOUNT_CODE',

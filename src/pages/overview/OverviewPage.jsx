@@ -11,7 +11,6 @@ import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
 import { CHART_COLORS } from '@/shared/lib/chartColors'
-import { formatPeriodLabel } from '@/shared/lib/periodFormat'
 import {
   formatCurrency,
   formatPercent,
@@ -36,14 +35,38 @@ export const OverviewPage = observer(function OverviewPage() {
   const kpiPrev = dashboardStore.kpiPrev
   const monthly = dashboardStore.monthly
 
-  const periodLabel = periodsStore.selectedPeriodYm ? formatPeriodLabel(periodsStore.selectedPeriodYm) : ''
+  const periodLabel = periodsStore.selectedPeriodLabel
   const generatedOn = new Date().toLocaleDateString('ru-RU')
+
+  // Заголовок трендов подстраивается под текущий режим — при "по кварталу"/
+  // "по году" monthly[] содержит не 12 месяцев, а все кварталы/года из
+  // истории (см. periodsStore/dashboardStore), поэтому "за 12 мес" там
+  // будет враньём.
+  const trendSuffix =
+    periodsStore.periodMode === 'year' ? 'по годам' : periodsStore.periodMode === 'quarter' ? 'по кварталам' : 'за 12 мес'
 
   // Drill-through для каждой KPI-карточки (кнопка-иконка в углу, отдельно
   // от drill-down по клику на саму карточку). Сортировка по номеру ЗН —
   // по умолчанию внутри useDrillThrough.
   const openDrillThrough = (title) => {
     drillThrough.open({ title })
+  }
+
+  // Клик по бару/точке на графике тренда — выбрать именно этот период.
+  // Тип элемента (месяц/квартал/год) зависит от текущего periodMode,
+  // поэтому режим комбобокса переключаем вслед за тем, что реально
+  // кликнули, а не всегда форсируем "месяц" (как было раньше, когда тренд
+  // мог быть только помесячным).
+  const handleTrendClick = (item) => {
+    if (item.PERIOD_TYPE === 'Y') {
+      periodsStore.setPeriodMode('year')
+      periodsStore.setSelectedYear(item.PERIOD_YEAR)
+    } else if (item.PERIOD_TYPE === 'Q') {
+      periodsStore.setPeriodMode('quarter')
+      periodsStore.setSelectedQuarter(item.PERIOD_YQ)
+    } else {
+      periodsStore.setSelectedPeriod(item.PERIOD_YM)
+    }
   }
 
   return (
@@ -57,7 +80,7 @@ export const OverviewPage = observer(function OverviewPage() {
         isLoading={dashboardStore.isLoadingAny}
         error={dashboardStore.errorAny}
         isEmpty={!dashboardStore.isLoadingAny && !kpi}
-        onRetry={() => periodsStore.selectedPeriodYm && dashboardStore.load(periodsStore.selectedPeriodYm)}
+        onRetry={() => periodsStore.selectedPeriod && dashboardStore.load(periodsStore.selectedPeriod)}
       >
         {kpi && (
           <>
@@ -140,18 +163,18 @@ export const OverviewPage = observer(function OverviewPage() {
 
             <div className={styles.chartsGrid}>
               <div className={styles.chartCard}>
-                <h2>Оборот за 12 мес</h2>
+                <h2>Оборот {trendSuffix}</h2>
                 <BarChart
                   data={monthly}
                   categoryKey="MONTH_LABEL"
                   dataKey="TURNOVER"
                   label="Оборот"
                   valueFormatter={(value) => formatCurrency(value)}
-                  onBarClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
+                  onBarClick={handleTrendClick}
                 />
               </div>
               <div className={styles.chartCard}>
-                <h2>Кол-во ЗН за 12 мес</h2>
+                <h2>Кол-во ЗН {trendSuffix}</h2>
                 <LineChart
                   data={monthly}
                   categoryKey="MONTH_LABEL"
@@ -159,11 +182,11 @@ export const OverviewPage = observer(function OverviewPage() {
                   label="Кол-во ЗН"
                   color={CHART_COLORS.blue}
                   valueFormatter={(value) => formatNumber(value)}
-                  onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
+                  onPointClick={handleTrendClick}
                 />
               </div>
               <div className={styles.chartCard}>
-                <h2>Средний чек за 12 мес</h2>
+                <h2>Средний чек {trendSuffix}</h2>
                 <LineChart
                   data={monthly}
                   categoryKey="MONTH_LABEL"
@@ -171,11 +194,11 @@ export const OverviewPage = observer(function OverviewPage() {
                   label="Ср. чек"
                   color={CHART_COLORS.positive}
                   valueFormatter={(value) => formatCurrency(value)}
-                  onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
+                  onPointClick={handleTrendClick}
                 />
               </div>
               <div className={styles.chartCard}>
-                <h2>Уровень товаров за 12 мес</h2>
+                <h2>Уровень товаров {trendSuffix}</h2>
                 <LineChart
                   data={monthly}
                   categoryKey="MONTH_LABEL"
@@ -183,7 +206,7 @@ export const OverviewPage = observer(function OverviewPage() {
                   label="Уровень товаров"
                   color={CHART_COLORS.purple}
                   valueFormatter={(value) => formatPercent(value)}
-                  onPointClick={(item) => periodsStore.setSelectedPeriod(item.PERIOD_YM)}
+                  onPointClick={handleTrendClick}
                 />
               </div>
             </div>
