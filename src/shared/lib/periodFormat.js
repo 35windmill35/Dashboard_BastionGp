@@ -60,6 +60,14 @@ export function formatYearLabel(year) {
   return `${year} год`
 }
 
+// Дательный падеж режима периода — для фраз "к прошлому/предыдущему ...".
+// Единое место вместо одинакового switch на каждом экране с KPI-дельтами.
+export function periodModeDative(periodMode) {
+  if (periodMode === 'year') return 'году'
+  if (periodMode === 'quarter') return 'кварталу'
+  return 'месяцу'
+}
+
 // Короткая подпись для оси графиков-трендов на Обзоре. С 18.08.2026
 // бэкенд кладёт в monthly[] то месяцы, то кварталы, то года — смотря какой
 // periodMode выбран (см. periodsStore.selectedPeriod) — поэтому формат

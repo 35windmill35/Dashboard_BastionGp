@@ -67,8 +67,39 @@ export function BarChart({
   const isVertical = layout === 'vertical'
   const hasHighlight = highlightKey !== undefined && highlightValue !== undefined && highlightValue !== null
 
+  // Для вертикального layout высота растёт с числом категорий — иначе на
+  // экранах с длинным списком (мастера/механики) Recharts сам скрывает
+  // часть подписей через одну, если высоты на всех не хватает (~36px на
+  // строку — примерно высота бара + промежуток). height проп по-прежнему
+  // работает как нижняя граница/фиксированная высота для горизонтальных
+  // графиков. height="100%" (строкой) пропускаем как есть — так родитель
+  // может растянуть график на всю доступную высоту флекс-контейнера
+  // (нужно, когда рядом стоит график другого типа с иной высотой по
+  // умолчанию, см. MechanicsPage.jsx — иначе оси X у них не совпадают).
+  const resolvedHeight =
+    isVertical && typeof height === 'number' ? Math.max(height, data.length * 36 + 40) : height
+
+  // Ширина колонки с именами категорий — фиксированные 140px не хватало на
+  // длинные ФИО (см. баг-репорт: "имена не влезают"). Считаем по самой
+  // длинной подписи после categoryFormatter, а не в притык под конкретное
+  // имя.
+  const yAxisWidth = isVertical
+    ? Math.min(
+        220,
+        Math.max(
+          100,
+          data.reduce((max, d) => {
+            const label = categoryFormatter ? categoryFormatter(d[categoryKey]) : d[categoryKey]
+            return Math.max(max, String(label ?? '').length)
+          }, 0) *
+            7 +
+            24
+        )
+      )
+    : undefined
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width="100%" height={resolvedHeight}>
       <RBarChart
         data={data}
         layout={layout}
@@ -84,7 +115,8 @@ export function BarChart({
               tickFormatter={categoryFormatter}
               stroke={CHART_COLORS.textSecondary}
               fontSize={12}
-              width={140}
+              width={yAxisWidth}
+              interval={0}
             />
           </>
         ) : (

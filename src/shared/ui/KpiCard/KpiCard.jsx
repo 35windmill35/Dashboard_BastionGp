@@ -28,7 +28,19 @@ import styles from './KpiCard.module.css'
 //   onClick={() => navigate('/masters')}
 //   onDrillThrough={() => drillThrough.open({ title: 'Список ЗН за период' })}
 // />
-export function KpiCard({ title, value, delta, deltaPositive = null, tooltip, onClick, onDrillThrough }) {
+export function KpiCard({
+  title,
+  value,
+  delta,
+  deltaPositive = null,
+  // Текст после дельты — "к прошлому месяцу" по умолчанию, но при выборе
+  // квартала/года в комбобоксе периода нужно "к прошлому кварталу"/"году"
+  // (см. periodsStore.periodMode), иначе подпись врёт про месяц.
+  deltaSuffix = 'к прошлому месяцу',
+  tooltip,
+  onClick,
+  onDrillThrough,
+}) {
   const isClickable = typeof onClick === 'function'
   const hasDrillThrough = typeof onDrillThrough === 'function'
   const hasDelta = delta !== undefined && delta !== null && delta !== '—'
@@ -79,7 +91,7 @@ export function KpiCard({ title, value, delta, deltaPositive = null, tooltip, on
             deltaPositive === true ? styles.positive : deltaPositive === false ? styles.negative : ''
           }`}
         >
-          {ArrowIcon && <ArrowIcon />} {delta} к прошлому месяцу
+          {ArrowIcon && <ArrowIcon />} {delta} {deltaSuffix}
         </div>
       )}
       {tooltip && <div className={styles.caption}>{tooltip}</div>}

@@ -21,6 +21,7 @@ import {
   isDeltaPositive,
   formatShortName,
 } from '@/shared/lib/formatters'
+import { periodModeDative } from '@/shared/lib/periodFormat'
 import styles from './Mechanics.module.css'
 
 // Экран «Механики» (ТЗ §4.4). В ответе API нет своего mechanicsPrev (в
@@ -73,6 +74,14 @@ export const MechanicsPage = observer(function MechanicsPage() {
 
   const periodLabel = periodsStore.selectedPeriodLabel
 
+  // "Оборот по механикам" (вертикальный BarChart) и "Потери vs Аккуратность"
+  // (ScatterChart) стоят рядом в один ряд — раньше у них были разные
+  // дефолтные высоты (280 vs 320), из-за чего ось X слева заканчивалась
+  // выше, чем справа, и снизу оставалось пустое место. Формула та же, что
+  // внутри BarChart.jsx для vertical layout — считаем явно и передаём в оба
+  // графика, чтобы оси совпадали независимо от числа механиков.
+  const mechanicsChartHeight = Math.max(320, turnoverData.length * 36 + 40)
+
   return (
     <div className={styles.page}>
       <PageHeader title="Механики" subtitle={`Статистика по исполнителям — ${periodLabel}`} />
@@ -105,32 +114,38 @@ export const MechanicsPage = observer(function MechanicsPage() {
         <div className={styles.chartsRow}>
           <div className={styles.chartWrapper}>
             <h3 className={styles.chartTitle}>Оборот по механикам</h3>
-            <BarChart
-              layout="vertical"
-              data={turnoverData}
-              categoryKey="MECHANIC_NAME"
-              dataKey="TURNOVER"
-              label="Оборот"
-              valueFormatter={(value) => formatCurrency(value)}
-              categoryFormatter={formatShortName}
-              onBarClick={openMechanicDrillThrough}
-            />
+            <div className={styles.chartFill} style={{ minHeight: mechanicsChartHeight }}>
+              <BarChart
+                layout="vertical"
+                data={turnoverData}
+                categoryKey="MECHANIC_NAME"
+                dataKey="TURNOVER"
+                label="Оборот"
+                height="100%"
+                valueFormatter={(value) => formatCurrency(value)}
+                categoryFormatter={formatShortName}
+                onBarClick={openMechanicDrillThrough}
+              />
+            </div>
           </div>
 
           <div className={styles.chartWrapper}>
             <h3 className={styles.chartTitle}>Потери vs Аккуратность</h3>
-            <ScatterChart
-              data={scatterData}
-              xKey="WASTED_TIME_MIN"
-              yKey="ACCURACY"
-              nameKey="MECHANIC_NAME"
-              xLabel="Потери, мин"
-              yLabel="Аккуратность, %"
-              getColor={(m) => (m.ACCURACY >= 75 ? CHART_COLORS.positive : CHART_COLORS.negative)}
-              onPointClick={openMechanicDrillThrough}
-              nameFormatter={formatShortName}
-            />
             <p className={styles.scatterNote}>Оптимум — левый верх: меньше потерь, выше аккуратность</p>
+            <div className={styles.chartFill} style={{ minHeight: mechanicsChartHeight }}>
+              <ScatterChart
+                data={scatterData}
+                xKey="WASTED_TIME_MIN"
+                yKey="ACCURACY"
+                nameKey="MECHANIC_NAME"
+                xLabel="Потери, мин"
+                yLabel="Аккуратность, %"
+                height="100%"
+                getColor={(m) => (m.ACCURACY >= 75 ? CHART_COLORS.positive : CHART_COLORS.negative)}
+                onPointClick={openMechanicDrillThrough}
+                nameFormatter={formatShortName}
+              />
+            </div>
           </div>
         </div>
 
@@ -162,7 +177,7 @@ export const MechanicsPage = observer(function MechanicsPage() {
               {
                 key: 'T_FACTOR',
                 header: 'Т-фактор (Δ)',
-                tooltip: 'Загрузка мощностей. Δ — к предыдущему месяцу',
+                tooltip: `Загрузка мощностей. Δ — к предыдущему ${periodModeDative(periodsStore.periodMode)}`,
                 render: (r) => {
                   const prev = prevById.get(r.MECHANIC_ID)
                   const delta = prev ? calcDelta(r.T_FACTOR, prev.T_FACTOR) : null

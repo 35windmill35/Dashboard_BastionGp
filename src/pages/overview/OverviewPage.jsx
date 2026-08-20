@@ -11,6 +11,7 @@ import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
 import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
 import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
 import { CHART_COLORS } from '@/shared/lib/chartColors'
+import { periodModeDative } from '@/shared/lib/periodFormat'
 import {
   formatCurrency,
   formatPercent,
@@ -44,6 +45,10 @@ export const OverviewPage = observer(function OverviewPage() {
   // будет враньём.
   const trendSuffix =
     periodsStore.periodMode === 'year' ? 'по годам' : periodsStore.periodMode === 'quarter' ? 'по кварталам' : 'за 12 мес'
+
+  // Подпись под дельтой KPI-карточек ("к прошлому месяцу"/"кварталу"/"году") —
+  // тоже зависит от periodMode, см. комментарий в KpiCard.jsx.
+  const deltaSuffix = `к прошлому ${periodModeDative(periodsStore.periodMode)}`
 
   // Drill-through для каждой KPI-карточки (кнопка-иконка в углу, отдельно
   // от drill-down по клику на саму карточку). Сортировка по номеру ЗН —
@@ -90,6 +95,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 value={formatCurrency(kpi.TURNOVER)}
                 delta={formatDelta(calcDelta(kpi.TURNOVER, kpiPrev?.TURNOVER))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.TURNOVER, kpiPrev?.TURNOVER))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Суммарный оборот за месяц"
                 onClick={() => navigate('/masters')}
                 onDrillThrough={() => openDrillThrough('Список ЗН за период')}
@@ -99,6 +105,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 value={formatNumber(kpi.ACCOUNT_COUNT)}
                 delta={formatDelta(calcDelta(kpi.ACCOUNT_COUNT, kpiPrev?.ACCOUNT_COUNT))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.ACCOUNT_COUNT, kpiPrev?.ACCOUNT_COUNT))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Количество закрытых ЗН за месяц"
                 onClick={() => navigate('/masters')}
                 onDrillThrough={() => openDrillThrough('Список ЗН за период')}
@@ -108,6 +115,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 value={formatCurrency(kpi.AVG_CASH)}
                 delta={formatDelta(calcDelta(kpi.AVG_CASH, kpiPrev?.AVG_CASH))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.AVG_CASH, kpiPrev?.AVG_CASH))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Оборот ÷ количество ЗН"
                 onClick={() => navigate('/brands')}
                 onDrillThrough={() => openDrillThrough('ЗН с суммами')}
@@ -117,6 +125,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 value={formatPercent(kpi.T_FACTOR)}
                 delta={formatDelta(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Загрузка мощностей. Больше 0 — переработка норматива"
                 onClick={() => navigate('/efficiency')}
                 onDrillThrough={() => openDrillThrough('ЗН с расчётом Т-фактора')}
@@ -126,6 +135,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 value={formatPercent(kpi.ACCURACY)}
                 delta={formatDelta(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Доля ЗН без грубых отклонений"
                 onClick={() => navigate('/efficiency')}
                 onDrillThrough={() => openDrillThrough('ЗН за период')}
@@ -135,6 +145,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 value={formatHours(kpi.LABOR_TIME)}
                 delta={formatDelta(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Суммарные нормо-часы работ"
                 onClick={() => navigate('/mechanics')}
                 onDrillThrough={() => openDrillThrough('ЗН с нормо-часами')}
@@ -144,6 +155,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 value={formatServiceTime(kpi.AVG_SERVICE_TIME)}
                 delta={formatDelta(calcDelta(kpi.AVG_SERVICE_TIME, kpiPrev?.AVG_SERVICE_TIME))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.AVG_SERVICE_TIME, kpiPrev?.AVG_SERVICE_TIME))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Среднее время от приёмки до выдачи"
                 onClick={() => navigate('/mechanics')}
                 onDrillThrough={() => openDrillThrough('ЗН со временем ремонта')}
@@ -155,6 +167,7 @@ export const OverviewPage = observer(function OverviewPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.WASTED_TIME_MIN, kpiPrev?.WASTED_TIME_MIN), {
                   higherIsBetter: false,
                 })}
+                deltaSuffix={deltaSuffix}
                 tooltip="Простой на 1 ЗН. Меньше — лучше"
                 onClick={() => navigate('/efficiency')}
                 onDrillThrough={() => openDrillThrough('ЗН с потерями')}

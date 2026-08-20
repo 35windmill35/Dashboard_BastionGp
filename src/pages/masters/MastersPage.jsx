@@ -19,6 +19,7 @@ import {
   isDeltaPositive,
   formatShortName,
 } from '@/shared/lib/formatters'
+import { periodModeDative } from '@/shared/lib/periodFormat'
 import styles from './Masters.module.css'
 
 // Экран «Мастера» (ТЗ §4.3). Карточка мастера = drill-down: локальное
@@ -159,7 +160,7 @@ export const MastersPage = observer(function MastersPage() {
               {
                 key: 'T_FACTOR',
                 header: 'Т-фактор (Δ)',
-                tooltip: 'Загрузка мощностей. Δ — к предыдущему месяцу',
+                tooltip: `Загрузка мощностей. Δ — к предыдущему ${periodModeDative(periodsStore.periodMode)}`,
                 render: (r) => {
                   const prev = prevById.get(r.MASTER_ID)
                   const delta = prev ? calcDelta(r.T_FACTOR, prev.T_FACTOR) : null

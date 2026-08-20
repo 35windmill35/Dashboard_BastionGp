@@ -22,6 +22,7 @@ import {
   formatShortName,
 } from '@/shared/lib/formatters'
 import { CHART_COLORS } from '@/shared/lib/chartColors'
+import { periodModeDative } from '@/shared/lib/periodFormat'
 import styles from './Efficiency.module.css'
 
 // Экран «Эффективность» (ТЗ §4.2). Про клик на графиках «Т-фактор» и
@@ -61,6 +62,11 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
     ? wastedData.reduce((sum, m) => sum + m.WASTED_TIME_MIN, 0) / wastedData.length
     : 0
 
+  // tFactorData/wastedData фильтруются по-разному (разные null-проверки) и
+  // могут отличаться по длине — если не выровнять высоту явно, оси X у
+  // двух соседних графиков могут разъехаться, как было на "Механиках".
+  const mastersChartHeight = Math.max(280, Math.max(tFactorData.length, wastedData.length) * 36 + 40)
+
   // Учитываем узкую панель фильтров над контентом (id стабильный, в
   // отличие от хэшированного CSS-модуль класса — см. widgets/app-sidebar/AppTopBar.jsx).
   const scrollToElement = (ref) => {
@@ -93,6 +99,10 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
 
   const periodLabel = periodsStore.selectedPeriodLabel
 
+  // См. комментарий в KpiCard.jsx — подпись под дельтой зависит от режима
+  // комбобокса периода (месяц/квартал/год).
+  const deltaSuffix = `к прошлому ${periodModeDative(periodsStore.periodMode)}`
+
   return (
     <div className={styles.page}>
       <PageHeader
@@ -114,6 +124,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                 value={formatPercent(kpi.T_FACTOR)}
                 delta={formatDelta(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Загрузка мощностей"
                 onClick={() => scrollToElement(tFactorRef)}
               />
@@ -124,6 +135,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                 deltaPositive={isDeltaPositive(calcDelta(kpi.WASTED_TIME_MIN, kpiPrev?.WASTED_TIME_MIN), {
                   higherIsBetter: false,
                 })}
+                deltaSuffix={deltaSuffix}
                 tooltip="Снижение = улучшение"
                 onClick={() => scrollToElement(wastedRef)}
               />
@@ -132,6 +144,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                 value={formatPercent(kpi.ACCURACY)}
                 delta={formatDelta(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Качество исполнения"
                 onClick={() => scrollToElement(marksRef)}
               />
@@ -140,6 +153,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                 value={formatHours(kpi.LABOR_TIME)}
                 delta={formatDelta(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
                 deltaPositive={isDeltaPositive(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
+                deltaSuffix={deltaSuffix}
                 tooltip="Суммарная"
                 onClick={() => navigate('/mechanics')}
               />
@@ -172,6 +186,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   categoryKey="MASTER_NAME"
                   dataKey="T_FACTOR"
                   label="Т-фактор"
+                  height={mastersChartHeight}
                   colorBySign
                   categoryFormatter={formatShortName}
                   valueFormatter={(value) => formatPercent(value)}
@@ -209,6 +224,7 @@ export const EfficiencyPage = observer(function EfficiencyPage() {
                   categoryKey="MASTER_NAME"
                   dataKey="WASTED_TIME_MIN"
                   label="Потери"
+                  height={mastersChartHeight}
                   getColor={(m) => (m.WASTED_TIME_MIN > avgWastedTime ? CHART_COLORS.negative : CHART_COLORS.positive)}
                   categoryFormatter={formatShortName}
                   valueFormatter={(value) => formatMinutes(value)}
