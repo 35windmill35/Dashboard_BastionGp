@@ -1,0 +1,317 @@
+import { useRef, useState, type RefObject } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { observer } from 'mobx-react-lite'
+import { dashboardStore } from '@/entities/dashboard/model/dashboardStore'
+import { periodsStore } from '@/entities/dashboard/model/periodsStore'
+import type { MetricRow } from '@/entities/dashboard/model/types'
+import { KpiCard } from '@/shared/ui/KpiCard/KpiCard'
+import { BarChart } from '@/shared/ui/charts/BarChart'
+import { DataTable } from '@/shared/ui/DataTable/DataTable'
+import { AsyncBoundary } from '@/shared/ui/AsyncBoundary/AsyncBoundary'
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader'
+import { useDrillThrough } from '@/features/drill-through/model/useDrillThrough'
+import { DrillThroughModal } from '@/features/drill-through/ui/DrillThroughModal'
+import {
+  formatPercent,
+  formatMinutes,
+  formatHours,
+  formatServiceTime,
+  calcDelta,
+  formatDelta,
+  isDeltaPositive,
+  cleanName,
+  formatShortName,
+} from '@/shared/lib/formatters'
+import { CHART_COLORS } from '@/shared/lib/chartColors'
+import { periodModeDative } from '@/shared/lib/periodFormat'
+import styles from './Efficiency.module.css'
+
+type ClickMode = 'drilldown' | 'drillthrough'
+
+// Экран «Эффективность» (ТЗ §4.2). Про клик на графиках «Т-фактор» и
+// «Потери» по мастерам: это drill-down на экран «Мастера» с выделением
+// (навигация с highlightMasterId, см. TASK-DEV-A.md/TASK-DEV-B.md — там же
+// дальнейший drill-through к ЗН через таблицу на самом экране «Мастера»).
+// Таблица марок — отдельный drill-through (список ЗН по марке) прямо здесь.
+export const EfficiencyPage = observer(function EfficiencyPage() {
+  const navigate = useNavigate()
+  const drillThrough = useDrillThrough()
+
+  const tFactorRef = useRef<HTMLDivElement>(null)
+  const wastedRef = useRef<HTMLDivElement>(null)
+  const marksRef = useRef<HTMLDivElement>(null)
+
+  // ТЗ §4.2 требует для этих двух графиков и drill-down (клик по мастеру →
+  // «Мастера» с выделением), и отдельный drill-through (список ЗН мастера).
+  // Один клик по столбцу не может делать оба действия одновременно, поэтому
+  // над каждым графиком — переключатель режима клика; по умолчанию
+  // drill-down (более частый сценарий — посмотреть карточку мастера).
+  const [tFactorMode, setTFactorMode] = useState<ClickMode>('drilldown')
+  const [wastedMode, setWastedMode] = useState<ClickMode>('drilldown')
+
+  const kpi = dashboardStore.kpi
+  const kpiPrev = dashboardStore.kpiPrev
+  const masters = dashboardStore.mastersFiltered
+  const marks = dashboardStore.marks
+
+  const tFactorData = masters.filter((m) => m.T_FACTOR !== null && m.T_FACTOR !== undefined)
+  const wastedData = masters.filter(
+    (m) => m.WASTED_TIME_MIN !== null && m.WASTED_TIME_MIN !== undefined
+  )
+  const sortedMarks = [...marks].sort(
+    (a, b) => ((b.TURNOVER as number) || 0) - ((a.TURNOVER as number) || 0)
+  )
+
+  // Средние потери по мастерам — точка отсчёта "хорошо/плохо" для
+  // раскраски столбцов (см. референс в ТЗ: выше среднего — красный, ниже —
+  // зелёный). Не строгое бизнес-правило, а наглядная подсветка на глаз.
+  const avgWastedTime = wastedData.length
+    ? wastedData.reduce((sum, m) => sum + (m.WASTED_TIME_MIN as number), 0) / wastedData.length
+    : 0
+
+  // tFactorData/wastedData фильтруются по-разному (разные null-проверки) и
+  // могут отличаться по длине — если не выровнять высоту явно, оси X у
+  // двух соседних графиков могут разъехаться, как было на "Механиках".
+  const mastersChartHeight = Math.max(
+    280,
+    Math.max(tFactorData.length, wastedData.length) * 36 + 40
+  )
+
+  // Учитываем узкую панель фильтров над контентом (id стабильный, в
+  // отличие от хэшированного CSS-модуль класса — см. widgets/app-sidebar/AppTopBar.jsx).
+  const scrollToElement = (ref: RefObject<HTMLDivElement | null>) => {
+    if (!ref.current) return
+    const header = document.getElementById('app-header')
+    const headerHeight = header ? header.offsetHeight : 80
+    const top = ref.current.getBoundingClientRect().top + window.scrollY - headerHeight - 16
+    window.scrollTo({ top, behavior: 'smooth' })
+  }
+
+  const goToMasterDrillDown = (masterId: number) => {
+    navigate('/masters', { state: { highlightMasterId: masterId } })
+  }
+
+  const openMarkDrillThrough = (mark: MetricRow) => {
+    drillThrough.open({
+      title: `Заказ-наряды по марке «${cleanName(mark.MARK_NAME)}»`,
+      filterString: 'MARK_ID=?',
+      filterParam: [mark.MARK_ID as number],
+    })
+  }
+
+  const openMasterDrillThrough = (master: MetricRow, subtitle: string) => {
+    drillThrough.open({
+      title: `${subtitle} мастера «${formatShortName(master.MASTER_NAME)}»`,
+      filterString: 'MASTER_ID=?',
+      filterParam: [master.MASTER_ID as number],
+    })
+  }
+
+  const periodLabel = periodsStore.selectedPeriodLabel
+
+  // См. комментарий в KpiCard.jsx — подпись под дельтой зависит от режима
+  // комбобокса периода (месяц/квартал/год).
+  const deltaSuffix = `к прошлому ${periodModeDative(periodsStore.periodMode)}`
+
+  return (
+    <div className={styles.page}>
+      <PageHeader
+        title="Т-фактор, потери, аккуратность"
+        subtitle={`${periodLabel} — операционная эффективность`}
+      />
+
+      <AsyncBoundary
+        isLoading={dashboardStore.isLoadingAny}
+        error={dashboardStore.errorAny}
+        isEmpty={!dashboardStore.isLoadingAny && !kpi}
+        onRetry={() =>
+          periodsStore.selectedPeriod && dashboardStore.load(periodsStore.selectedPeriod)
+        }
+      >
+        {kpi && (
+          <>
+            <div className={styles.kpiGrid}>
+              <KpiCard
+                title="Т-фактор"
+                value={formatPercent(kpi.T_FACTOR)}
+                delta={formatDelta(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
+                deltaPositive={isDeltaPositive(calcDelta(kpi.T_FACTOR, kpiPrev?.T_FACTOR))}
+                deltaSuffix={deltaSuffix}
+                tooltip="Загрузка мощностей"
+                onClick={() => scrollToElement(tFactorRef)}
+              />
+              <KpiCard
+                title="Потери на ЗН"
+                value={formatMinutes(kpi.WASTED_TIME_MIN)}
+                delta={formatDelta(calcDelta(kpi.WASTED_TIME_MIN, kpiPrev?.WASTED_TIME_MIN))}
+                deltaPositive={isDeltaPositive(
+                  calcDelta(kpi.WASTED_TIME_MIN, kpiPrev?.WASTED_TIME_MIN),
+                  {
+                    higherIsBetter: false,
+                  }
+                )}
+                deltaSuffix={deltaSuffix}
+                tooltip="Снижение = улучшение"
+                onClick={() => scrollToElement(wastedRef)}
+              />
+              <KpiCard
+                title="Аккуратность"
+                value={formatPercent(kpi.ACCURACY)}
+                delta={formatDelta(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
+                deltaPositive={isDeltaPositive(calcDelta(kpi.ACCURACY, kpiPrev?.ACCURACY))}
+                deltaSuffix={deltaSuffix}
+                tooltip="Качество исполнения"
+                onClick={() => scrollToElement(marksRef)}
+              />
+              <KpiCard
+                title="Выработка"
+                value={formatHours(kpi.LABOR_TIME)}
+                delta={formatDelta(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
+                deltaPositive={isDeltaPositive(calcDelta(kpi.LABOR_TIME, kpiPrev?.LABOR_TIME))}
+                deltaSuffix={deltaSuffix}
+                tooltip="Суммарная"
+                onClick={() => navigate('/mechanics')}
+              />
+            </div>
+
+            <div className={styles.chartsRow}>
+              <div className={styles.chartWrapper} ref={tFactorRef}>
+                <div className={styles.chartHeader}>
+                  <h3 className={styles.chartTitle}>Т-фактор по мастерам</h3>
+                  <div className={styles.modeToggle}>
+                    <button
+                      type="button"
+                      className={
+                        tFactorMode === 'drilldown' ? styles.modeBtnActive : styles.modeBtn
+                      }
+                      onClick={() => setTFactorMode('drilldown')}
+                    >
+                      Мастер
+                    </button>
+                    <button
+                      type="button"
+                      className={
+                        tFactorMode === 'drillthrough' ? styles.modeBtnActive : styles.modeBtn
+                      }
+                      onClick={() => setTFactorMode('drillthrough')}
+                    >
+                      Список ЗН
+                    </button>
+                  </div>
+                </div>
+                <BarChart
+                  layout="vertical"
+                  data={tFactorData}
+                  categoryKey="MASTER_NAME"
+                  dataKey="T_FACTOR"
+                  label="Т-фактор"
+                  height={mastersChartHeight}
+                  colorBySign
+                  categoryFormatter={formatShortName}
+                  valueFormatter={(value) => formatPercent(value)}
+                  onBarClick={(item) =>
+                    tFactorMode === 'drilldown'
+                      ? goToMasterDrillDown(item.MASTER_ID as number)
+                      : openMasterDrillThrough(item, 'Список ЗН')
+                  }
+                />
+              </div>
+
+              <div className={styles.chartWrapper} ref={wastedRef}>
+                <div className={styles.chartHeader}>
+                  <h3 className={styles.chartTitle}>Потери на ЗН по мастерам</h3>
+                  <div className={styles.modeToggle}>
+                    <button
+                      type="button"
+                      className={wastedMode === 'drilldown' ? styles.modeBtnActive : styles.modeBtn}
+                      onClick={() => setWastedMode('drilldown')}
+                    >
+                      Мастер
+                    </button>
+                    <button
+                      type="button"
+                      className={
+                        wastedMode === 'drillthrough' ? styles.modeBtnActive : styles.modeBtn
+                      }
+                      onClick={() => setWastedMode('drillthrough')}
+                    >
+                      Список ЗН
+                    </button>
+                  </div>
+                </div>
+                <BarChart
+                  layout="vertical"
+                  data={wastedData}
+                  categoryKey="MASTER_NAME"
+                  dataKey="WASTED_TIME_MIN"
+                  label="Потери"
+                  height={mastersChartHeight}
+                  getColor={(m) =>
+                    (m.WASTED_TIME_MIN as number) > avgWastedTime
+                      ? CHART_COLORS.negative
+                      : CHART_COLORS.positive
+                  }
+                  categoryFormatter={formatShortName}
+                  valueFormatter={(value) => formatMinutes(value)}
+                  onBarClick={(item) =>
+                    wastedMode === 'drilldown'
+                      ? goToMasterDrillDown(item.MASTER_ID as number)
+                      : openMasterDrillThrough(item, 'ЗН с потерями')
+                  }
+                />
+              </div>
+            </div>
+
+            <div className={styles.tableWrapper} ref={marksRef}>
+              <h3 className={styles.tableTitle}>Эффективность по маркам</h3>
+              <DataTable
+                columns={[
+                  {
+                    key: 'MARK_NAME',
+                    header: 'Марка',
+                    render: (r) => cleanName(r.MARK_NAME) || '—',
+                  },
+                  {
+                    key: 'LABOR_TIME',
+                    header: 'Выработка',
+                    tooltip: 'Суммарные нормо-часы',
+                    render: (r) => formatHours(r.LABOR_TIME),
+                  },
+                  {
+                    key: 'AVG_SERVICE_TIME',
+                    header: 'Ср.время ремонта',
+                    tooltip: 'Среднее время ремонта по марке',
+                    render: (r) => formatServiceTime(r.AVG_SERVICE_TIME),
+                  },
+                  {
+                    key: 'T_FACTOR',
+                    header: 'Т-фактор',
+                    tooltip: 'Загрузка мощностей',
+                    render: (r) => formatPercent(r.T_FACTOR),
+                  },
+                  {
+                    key: 'WASTED_TIME_MIN',
+                    header: 'Потери',
+                    tooltip: 'Простой на ЗН',
+                    render: (r) => formatMinutes(r.WASTED_TIME_MIN),
+                  },
+                  {
+                    key: 'ACCURACY',
+                    header: 'Аккуратность',
+                    tooltip: 'Качество исполнения',
+                    render: (r) => formatPercent(r.ACCURACY),
+                  },
+                ]}
+                data={sortedMarks}
+                getRowKey={(r) => r.MARK_ID as number}
+                onRowClick={openMarkDrillThrough}
+              />
+            </div>
+          </>
+        )}
+      </AsyncBoundary>
+
+      <DrillThroughModal {...drillThrough} />
+    </div>
+  )
+})
