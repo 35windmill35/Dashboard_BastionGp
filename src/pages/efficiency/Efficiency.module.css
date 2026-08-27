@@ -84,7 +84,7 @@
 .modeBtnActive {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  color: #1a1206;
+  color: var(--color-on-accent);
   font-weight: 600;
 }
 

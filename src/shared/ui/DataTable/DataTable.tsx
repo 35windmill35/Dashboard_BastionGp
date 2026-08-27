@@ -104,7 +104,13 @@ export function DataTable<T extends Record<string, unknown>>({
                     onClick={() => handleHeaderClick(col)}
                     style={{ textAlign: col.align || 'left' }}
                   >
-                    {col.tooltip ? <Tooltip text={col.tooltip}>{label}</Tooltip> : label}
+                    {col.tooltip ? (
+                      <Tooltip text={col.tooltip} placement="bottom">
+                        {label}
+                      </Tooltip>
+                    ) : (
+                      label
+                    )}
                   </th>
                 )
               })}

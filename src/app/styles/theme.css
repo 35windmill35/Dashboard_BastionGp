@@ -27,6 +27,13 @@
   --color-positive: #22c55e;
   --color-negative: #ef4444;
 
+  /* Цвет текста поверх плашек с фоном --color-accent (активный пункт меню,
+     активная вкладка, активная кнопка режима) — раньше был захардкожен
+     #1a1206 (тёмный) прямо в CSS-модулях страниц: подходит только под
+     оранжевый акцент тёмной темы, на синем акценте светлой темы контраст
+     был слишком низким. */
+  --color-on-accent: #1a1206;
+
   /* Дополнительные цвета для графиков (см. shared/lib/chartColors.js —
      там же продублировано как JS-константы, т.к. Recharts/SVG не умеет
      читать CSS-переменные напрямую). */
@@ -45,6 +52,7 @@
   --color-accent: #2f5fe0;
   --color-positive: #1f9d5a;
   --color-negative: #d93636;
+  --color-on-accent: #ffffff;
 }
 
 @media (prefers-color-scheme: light) {
@@ -58,6 +66,7 @@
     --color-accent: #2f5fe0;
     --color-positive: #1f9d5a;
     --color-negative: #d93636;
+    --color-on-accent: #ffffff;
   }
 }
 

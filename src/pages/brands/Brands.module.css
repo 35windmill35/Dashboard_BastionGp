@@ -33,7 +33,7 @@
 
 .tabActive,
 .tabActive:hover {
-  color: #1a1206;
+  color: var(--color-on-accent);
   background: var(--color-accent);
   border-color: var(--color-accent);
   font-weight: 600;
